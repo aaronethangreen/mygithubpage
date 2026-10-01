@@ -150,6 +150,7 @@ details.opt{margin-top:22px}
   var MATS={
     "Clay":["Pinch a small form with your eyes closed","Make ten little forms in ten minutes, no keeping","Press textures from around the house into a slab","Roll coils and let them find their own shape"],
     "Drawing":["Draw the same object five times, faster each time","Draw only the shadows in the room","Blind contour of your own hand","Fill a page with one kind of mark"],
+    "Design":["Redesign one everyday object you use daily, sketch only","Make a poster using only type and one color","Lay out a page of cut paper scraps until the arrangement feels right","Sketch three ways to organize one shelf or drawer"],
     "Sculpture":["Build something that balances, from what\u2019s in a drawer","Bend a line drawing out of wire","Stack and restack three objects until one feels right","Carve into a bar of soap or a block of foam"]
   };
   var TAGS=["Lost track of time","Got restless","Wanted to stop early","Kept going past the time","Surprised myself","Kept going back to one thing","Felt clumsy","Felt calm","Judged the work","Forgot about the phone"];
@@ -281,7 +282,7 @@ details.opt{margin-top:22px}
   }
   function step4(){
     var m=draft.material, prompts=MATS[m]||[];
-    return stepHead("Choose a material","Start with your hands: clay, drawing, or sculpture. Pick a material, then something small to try. Not a product. A mess counts.")+
+    return stepHead("Choose a material","Clay, drawing, sculpture, or design. Pick a material, then something small to try. Not a product. A mess counts.")+
       '<div class="seg" role="group" aria-label="Material">'+Object.keys(MATS).map(function(k){return '<button data-mat="'+k+'" aria-pressed="'+(m===k)+'">'+k+'</button>'}).join("")+'</div>'+
       (prompts.length?'<p class="q">A place to start, if you want one</p><div class="chips">'+prompts.map(function(p){return '<button class="chip" data-prompt="'+esc(p)+'" aria-pressed="'+(draft.experiment===p)+'">'+esc(p)+'</button>'}).join("")+'</div>':'')+
       '<label class="q" for="exp">Today I\u2019m trying\u2026</label>'+
@@ -290,7 +291,7 @@ details.opt{margin-top:22px}
       '<div class="seg" role="group" aria-label="Session length">'+[20,45,60,90].map(function(n){return '<button data-min="'+n+'" aria-pressed="'+(draft.minutes===n)+'">'+n+'</button>'}).join("")+'</div>'+
       '<p class="hint">Minutes. Starting out, 20 or 45 is plenty. Longer isn\u2019t better. Returning is.</p>'+
       '<div class="chips" style="margin-top:18px"><button class="chip" data-ready aria-pressed="'+(!!draft.ready)+'">'+(draft.ready?'\u2713 ':'')+'The materials are out and the phone has somewhere to go</button></div>'+
-      '<p class="hint">Design can come later, once this is a habit.</p>';
+      '';
   }
   function elapsedMin(){var end=draft.endedAt||Date.now();return Math.max(0,Math.floor((end-draft.startedAt)/60000))}
   function elapsedText(){var m=elapsedMin(),h=Math.floor(m/60);return h?h+':'+String(m%60).padStart(2,"0"):m+' min'}
@@ -372,7 +373,7 @@ details.opt{margin-top:22px}
         (d?'<p class="tags">'+d+'</p>':'')+
         (rows.length?'<details><summary>More from this session</summary><dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'}).join("")+'</dl></details>':'')+
         '<button class="linkbtn" data-del="'+esc(s.id)+'">Delete this session</button></article>';
-    }).join("")+'<div class="stack" style="margin-top:24px"><button class="btn ghost wide" data-act="home">Back</button></div>';
+    }).join("")+'<div class="stack" style="margin-top:24px"><button class="btn ghost wide" data-act="export">Download my notes</button><button class="btn ghost wide" data-act="home">Back</button></div>';
   }
   function aboutView(){
     return '<div class="about"><h1>Why it\u2019s built this way</h1>'+
@@ -381,7 +382,7 @@ details.opt{margin-top:22px}
       '<h2>Refusing the pull and a minute of nothing</h2><p>Scrolling is often avoidance, and avoidance keeps whatever it avoids in place. A short, deliberate stretch of nothing lets boredom return, and ideas tend to follow boredom.</p>'+
       '<h2>Emptying your head, capped</h2><p>Writing worries down helps only if it ends. Five minutes, then stop. Parking one task for after keeps the making window clear and still honors the task.</p>'+
       '<h2>Curiosity before choosing</h2><p>Listing what pulls you, then noticing what the list shares, is a quiet way of learning about yourself. It also makes the next choice feel like yours.</p>'+
-      '<h2>Small material, small bite</h2><p>Clay, drawing, and sculpture ask the hands first. Twenty minutes is a real session. Growth comes from returning, not from length.</p>'+
+      '<h2>Small material, small bite</h2><p>Clay, drawing, sculpture, and design all start with small, hands-on experiments. Twenty minutes is a real session. Growth comes from returning, not from length.</p>'+
       '<h2>Phone away</h2><p>Willpower is unreliable. Distance is reliable.</p>'+
       '<h2>Reflection by tapping</h2><p>Writing is optional so that reflection never becomes a chore. A tap that says \u201clost track of time\u201d is data about you.</p>'+
       '<h2>Someone to tell</h2><p>Creative attention lasts longer inside real connection. Telling one person is not showing the work. It is letting the practice exist in your life.</p>'+
@@ -426,6 +427,7 @@ details.opt{margin-top:22px}
     if(act==="resume"){if(draft.view==="checkin")go("checkin");else go("step",draft.step||seq()[0]);return}
     if(act==="discard"){if(confirm("Discard the session in progress?")){draft=null;lsDel(LS_DRAFT);render()}return}
     if(act==="notes"){go("notes");return}
+    if(act==="export"){try{var b=new Blob([JSON.stringify(sessions,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="making-session-notes.json";document.body.appendChild(a);a.click();a.remove()}catch(x){}return}
     if(act==="about"){go("about");return}
     if(act==="home"){go("home");return}
     if(act==="next"){go("step",seq()[stepPos()+1]);return}
@@ -445,7 +447,8 @@ details.opt{margin-top:22px}
     if(cd!==null){
       var box=document.getElementById(cd),n=box.querySelector("[data-n]"),left=+t.getAttribute("data-sec"),done=t.getAttribute("data-done");
       clearInterval(countId);t.disabled=true;t.textContent="Running";
-      countId=setInterval(function(){left--;n.textContent=mmss(Math.max(left,0));if(left<=0){clearInterval(countId);countId=null;box.innerHTML='<span class="small">'+esc(done)+'</span>';if(navigator.vibrate)try{navigator.vibrate(200)}catch(x){}}},1000);
+      var endAt=Date.now()+left*1000;
+      countId=setInterval(function(){left=Math.max(0,Math.ceil((endAt-Date.now())/1000));n.textContent=mmss(left);if(left<=0){clearInterval(countId);countId=null;box.innerHTML='<span class="small">'+esc(done)+'</span>';if(navigator.vibrate)try{navigator.vibrate(200)}catch(x){}}},1000);
       return;
     }
     var d=t.getAttribute("data-drain");
