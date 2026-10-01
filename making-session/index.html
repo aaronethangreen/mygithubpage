@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Making session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e8ebe7; --surface:#f5f6f3; --ink:#1f2421; --muted:#5a625c; --line:#c5cbc4;
+  --house:#2d3e57; --on-house:#f2f4f6; --pool:#f7d79a; --wall:#d9ddd6; --floor:#c7ccc3; --dark:#141a22;
+  --serif:"Spectral", Georgia, "Times New Roman", serif;
+  --sans:"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15191d; --surface:#1d2227; --ink:#e7e9e4; --muted:#9aa39b; --line:#353c41;
+    --house:#a9bfdc; --on-house:#121820; --pool:#f2c877; --wall:#262c31; --floor:#30373c; --dark:#06080b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15191d; --surface:#1d2227; --ink:#e7e9e4; --muted:#9aa39b; --line:#353c41;
+  --house:#a9bfdc; --on-house:#121820; --pool:#f2c877; --wall:#262c31; --floor:#30373c; --dark:#06080b;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:34rem;margin:0 auto;padding:0 20px 130px}
+.stage{display:block;width:100%;height:auto;margin:0 0 6px}
+.stage .t{transition:opacity .9s ease}
+.count{font-size:14px;color:var(--muted);margin:14px 0 2px}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(30px,8vw,40px);line-height:1.12;margin:4px 0 10px;letter-spacing:-.01em}
+h2{font-family:var(--serif);font-weight:400;font-size:23px;margin:30px 0 6px}
+.lede{font-family:var(--serif);font-size:19px;line-height:1.6;margin:0 0 22px}
+.anchor{font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.45;border-left:3px solid var(--pool);padding:4px 0 4px 16px;margin:8px 0 26px}
+label.q,.q{display:block;font-family:var(--serif);font-style:italic;font-size:18px;margin:22px 0 8px}
+textarea,input[type=text]{width:100%;font:inherit;font-size:17px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;line-height:1.5;resize:vertical}
+textarea{min-height:100px}
+textarea.big{min-height:160px;font-family:var(--serif);font-size:19px}
+textarea:focus,input:focus,button:focus-visible{outline:2px solid var(--house);outline-offset:2px}
+.hint{font-size:14px;color:var(--muted);margin:6px 0 0}
+p.body{margin:0 0 14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.chip{font:inherit;font-size:15px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:8px 14px;cursor:pointer;text-align:left}
+.chip[aria-pressed="true"]{background:var(--house);color:var(--on-house);border-color:var(--house)}
+.loops{list-style:none;margin:12px 0 0;padding:0}
+.loops li{border-bottom:1px solid var(--line)}
+.loops button{all:unset;display:flex;gap:12px;align-items:flex-start;width:100%;padding:11px 2px;cursor:pointer;font-size:16px}
+.loops button:focus-visible{outline:2px solid var(--house)}
+.star{width:20px;flex:none;text-align:center;color:var(--muted)}
+.loops [aria-pressed="true"] .star{color:var(--ink)}
+.loops [aria-pressed="true"] .lt{font-weight:600}
+.btn{font:inherit;font-weight:600;font-size:17px;border:0;border-radius:12px;padding:15px 20px;cursor:pointer;background:var(--house);color:var(--on-house)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn.wide{width:100%}
+.btn.sm{padding:10px 16px;font-size:15px}
+.stack{display:grid;gap:10px;margin-top:8px}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px))}
+.nav .in{max-width:34rem;margin:0 auto;display:flex;gap:10px}
+.nav .btn{flex:1}
+.nav .btn.ghost{flex:0 0 auto}
+.clock{font-family:var(--serif);font-size:64px;line-height:1;margin:18px 0 6px;font-variant-numeric:tabular-nums}
+.small{font-size:15px;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;font:inherit;padding:12px 0;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--house);color:var(--on-house)}
+.scale{margin:8px 0 4px}
+.scale .ends{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:6px}
+.timerbox{display:flex;align-items:center;gap:14px;margin:12px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.timerbox .n{font-family:var(--serif);font-size:30px;font-variant-numeric:tabular-nums;min-width:3.2ch}
+.entry{border-top:1px solid var(--line);padding:18px 0}
+.entry .d{font-size:14px;color:var(--muted)}
+.entry .l{font-family:var(--serif);font-size:20px;line-height:1.5;margin:6px 0}
+.entry details{margin-top:6px;font-size:15px;color:var(--muted)}
+.entry summary,details.opt summary{cursor:pointer;color:var(--ink)}
+details.opt{margin-top:22px}
+.entry dl{margin:10px 0 0}
+.entry dt{font-style:italic;font-family:var(--serif);color:var(--ink);margin-top:8px}
+.entry dd{margin:2px 0 0}
+.tags{font-size:14px;color:var(--muted);margin:4px 0 0}
+.linkbtn{all:unset;cursor:pointer;color:var(--muted);text-decoration:underline;font-size:14px;margin-top:10px;display:inline-block}
+.empty{font-family:var(--serif);font-size:18px;color:var(--muted);margin:20px 0}
+.summary{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 20px;background:var(--surface)}
+.summary p{margin:0 0 6px}
+.summary p:last-child{margin:0}
+.foot{font-size:13px;color:var(--muted);margin-top:36px}
+.about h2{font-size:21px;margin-top:24px}
+.about p{margin:0 0 10px}
+@media (prefers-reduced-motion: reduce){.stage .t{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <svg class="stage" viewBox="0 0 360 150" role="img" aria-label="A worktable under a lamp; the room dims as the session goes on">
+    <defs>
+      <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--pool)" stop-opacity=".95"/>
+        <stop offset="1" stop-color="var(--pool)" stop-opacity=".15"/>
+      </linearGradient>
+      <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#9cc4ff" stop-opacity=".9"/>
+        <stop offset="1" stop-color="#9cc4ff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect x="0" y="0" width="360" height="150" rx="14" fill="var(--wall)"/>
+    <rect x="0" y="112" width="360" height="38" fill="var(--floor)"/>
+    <rect x="0" y="0" width="360" height="150" rx="14" fill="var(--dark)" class="t" id="dimmer" opacity="0"/>
+    <line x1="180" y1="0" x2="180" y2="30" stroke="var(--muted)" stroke-width="1.5"/>
+    <polygon points="168,40 192,40 262,104 98,104" fill="url(#cone)" class="t" id="beam" opacity=".3"/>
+    <path d="M164 41 Q180 22 196 41 Z" fill="var(--house)"/>
+    <rect x="96" y="104" width="168" height="5" rx="1.5" fill="var(--ink)" opacity=".85"/>
+    <line x1="110" y1="109" x2="110" y2="140" stroke="var(--ink)" stroke-width="3" opacity=".85"/>
+    <line x1="250" y1="109" x2="250" y2="140" stroke="var(--ink)" stroke-width="3" opacity=".85"/>
+    <g class="t" id="materials" opacity=".35">
+      <rect x="140" y="88" width="16" height="16" fill="#b7835a"/>
+      <rect x="158" y="96" width="26" height="8" fill="#7f8f6c"/>
+      <path d="M190 104 Q196 84 208 92 Q214 98 206 104 Z" fill="#c9c2b3"/>
+      <circle cx="222" cy="99" r="5" fill="#5f7590"/>
+    </g>
+    <g class="t" id="phone" opacity="1">
+      <ellipse cx="124" cy="92" rx="22" ry="16" fill="url(#glow)"/>
+      <rect x="118" y="88" width="12" height="16" rx="2" fill="#2a3340"/>
+      <rect x="120" y="90" width="8" height="11" fill="#9cc4ff"/>
+    </g>
+  </svg>
+  <main id="app"></main>
+</div>
+<div class="nav" id="nav" hidden><div class="in" id="navin"></div></div>
+
+<script>
+(function(){
+  "use strict";
+  var LS_DRAFT="ms2.draft", LS_SESS="ms2.sessions";
+  function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+  function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function lines(t){return String(t||"").split("\n").map(function(s){return s.trim()}).filter(Boolean)}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+  function fmtTime(ts){return new Date(ts).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}
+  function fmtDate(ts){return new Date(ts).toLocaleDateString([], {weekday:"long",month:"long",day:"numeric",year:"numeric"})}
+  function mmss(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+
+  var DRAINS=["Phone","Social feeds","Email","News","Messages","Podcasts"];
+  var MATS={
+    "Clay":["Pinch a small form with your eyes closed","Make ten little forms in ten minutes, no keeping","Press textures from around the house into a slab","Roll coils and let them find their own shape"],
+    "Drawing":["Draw the same object five times, faster each time","Draw only the shadows in the room","Blind contour of your own hand","Fill a page with one kind of mark"],
+    "Sculpture":["Build something that balances, from what\u2019s in a drawer","Bend a line drawing out of wire","Stack and restack three objects until one feels right","Carve into a bar of soap or a block of foam"]
+  };
+  var TAGS=["Lost track of time","Got restless","Wanted to stop early","Kept going past the time","Surprised myself","Kept going back to one thing","Felt clumsy","Felt calm","Judged the work","Forgot about the phone"];
+  var FULL=[1,2,3,4,5,6], SHORT=[4,5,6];
+
+  var view="home", step=1, timerId=null, countId=null;
+  var draft=lsGet(LS_DRAFT,null);
+  var sessions=lsGet(LS_SESS,[]);
+  var db=null, userId=null;
+
+  function newDraft(path){return{id:uid(),createdAt:Date.now(),path:path||"full",before:{},after:{},drains:[],avoiding:"",loopsText:"",starred:[],parked:"",curiousText:"",common:"",material:"",experiment:"",minutes:45,ready:false,startedAt:null,endedAt:null,learned:"",tags:[],held:"",restless:"",caught:"",next:"",tell:"",view:"checkin",step:1}}
+  function saveDraft(){if(draft){draft.view=view;draft.step=step;lsSet(LS_DRAFT,draft)}}
+  var saveT=null;function saveDraftSoon(){clearTimeout(saveT);saveT=setTimeout(saveDraft,300)}
+  function seq(){return draft&&draft.path==="short"?SHORT:FULL}
+  function stepPos(){return seq().indexOf(step)}
+
+  /* ---------- persistence ---------- */
+  function sortSessions(){sessions.sort(function(a,b){return b.createdAt-a.createdAt})}
+  function cacheSessions(){lsSet(LS_SESS,sessions)}
+  function sessRef(id){return db.collection("data/users/"+userId).doc(id)}
+  function pushSession(s){
+    if(!db||!userId)return Promise.resolve(false);
+    var body={};Object.keys(s).forEach(function(k){if(k!=="synced")body[k]=s[k]});
+    return sessRef(s.id).set(body).then(function(){s.synced=true;cacheSessions();return true}).catch(function(){return false});
+  }
+  function connect(){
+    if(!window.claude||typeof window.claude.use!=="function")return;
+    Promise.all([window.claude.use("db"),window.claude.use("user")]).then(function(r){
+      var d=r[0],u=r[1];if(!d||!u)return;
+      return u.id().then(function(id){
+        if(!id)return;db=d;userId=id;
+        return db.collection("data/users/"+userId).limit(1000).get().then(function(snap){
+          var byId={};sessions.forEach(function(s){byId[s.id]=s});
+          snap.docs.forEach(function(doc){if(doc.exists){var x=Object.assign({},doc.data());x.synced=true;byId[doc.id]=x}});
+          sessions=Object.keys(byId).map(function(k){return byId[k]});
+          sortSessions();cacheSessions();
+          var pending=sessions.filter(function(s){return !s.synced});
+          return pending.reduce(function(p,s){return p.then(function(){return pushSession(s)})},Promise.resolve());
+        }).then(function(){if(view==="notes"||view==="home")render()});
+      });
+    }).catch(function(){});
+  }
+
+  /* ---------- stage ---------- */
+  function setStage(){
+    var dim=0,beam=.3,mats=.35,phone=1;
+    if(view==="checkin"){dim=.08;beam=.35;mats=.4}
+    if(view==="step"){
+      var k=Math.min(step,5)/5; dim=k*.7; beam=.3+k*.65; mats=.35+k*.65; phone=0;
+      if(step===5){dim=draft&&draft.startedAt&&!draft.endedAt?.82:.7;beam=1;mats=1}
+      if(step===6){dim=.35;beam=.75;mats=1}
+    }
+    if(view==="done"){dim=.2;beam=.6;mats=1;phone=0}
+    if(view==="notes"||view==="about"){dim=.15;beam=.5;mats=.8;phone=0}
+    document.getElementById("dimmer").setAttribute("opacity",dim);
+    document.getElementById("beam").setAttribute("opacity",beam);
+    document.getElementById("materials").setAttribute("opacity",mats);
+    document.getElementById("phone").setAttribute("opacity",phone);
+  }
+
+  /* ---------- pieces ---------- */
+  function scale(phase,name,lo,hi){
+    var v=(draft[phase]||{})[name];
+    return '<div class="scale"><div class="seg" role="group" aria-label="'+esc(name)+'">'+[1,2,3,4,5].map(function(n){return '<button data-scale="'+phase+'.'+name+'" data-v="'+n+'" aria-pressed="'+(v===n)+'">'+n+'</button>'}).join("")+'</div><div class="ends"><span>'+lo+'</span><span>'+hi+'</span></div></div>';
+  }
+  function countdown(id,seconds,label,doneText){
+    return '<div class="timerbox" id="'+id+'"><span class="n" data-n>'+mmss(seconds)+'</span><button class="btn sm" data-count="'+id+'" data-sec="'+seconds+'" data-done="'+esc(doneText)+'">'+label+'</button></div>';
+  }
+  function stepHead(title,lede){var pos=stepPos()+1;return '<p class="count">Step '+pos+' of '+seq().length+'</p><h1>'+title+'</h1>'+(lede?'<p class="lede">'+lede+'</p>':'')}
+
+  /* ---------- views ---------- */
+  function homeView(){
+    var resume=draft?'<button class="btn wide" data-act="resume">Resume your session</button><button class="btn ghost wide" data-act="discard">Start over</button>'
+      :'<button class="btn wide" data-act="begin">Begin a session</button><button class="btn ghost wide" data-act="short">Just make (20 minutes, no setup)</button>';
+    var n=sessions.length;
+    return '<h1>A private making session</h1>'+
+      '<p class="anchor">The creative act is a way of learning about yourself.</p>'+
+      '<p class="lede">Nothing here is scored, counted, or reminded. There are no streaks to keep. Any session you return to is enough.</p>'+
+      '<div class="stack">'+resume+
+      '<button class="btn ghost wide" data-act="notes">Read what you\u2019ve learned'+(n?' ('+n+')':'')+'</button>'+
+      '<button class="btn ghost wide" data-act="about">Why it\u2019s built this way</button></div>'+
+      '<p class="foot">This is a practice for attention and making, not a treatment. If low mood, worry, or scattered attention keep getting in the way of ordinary life, it\u2019s worth talking with someone you trust or a clinician.</p>';
+  }
+  function checkinView(phase){
+    var before=phase==="before";
+    return '<p class="count">'+(before?'Before you begin':'Now that you\u2019re back')+'</p>'+
+      '<h1>'+(before?'A quick reading':'A second reading')+'</h1>'+
+      '<p class="lede">Two taps. Not a test, just where you are right now'+(before?'':', so you can see what making does for you over time')+'.</p>'+
+      '<p class="q">How settled do you feel?</p>'+scale(phase,"settled","scattered","settled")+
+      '<p class="q">How much energy do you have?</p>'+scale(phase,"energy","flat","alive")+
+      '<p class="hint">You can skip this. It\u2019s most useful when you do it most times.</p>';
+  }
+  function step1(){
+    return stepHead("Refuse the pull","Choose what you\u2019re setting aside for this session. Your attention is yours, and you\u2019re taking it back with your hands.")+
+      '<div class="chips" role="group" aria-label="What you\u2019re setting aside">'+DRAINS.map(function(d){return '<button class="chip" data-drain="'+esc(d)+'" aria-pressed="'+(draft.drains.indexOf(d)>-1)+'">'+esc(d)+'</button>'}).join("")+'</div>'+
+      '<p class="q">One minute of nothing</p>'+
+      '<p class="body small">Phone face down. No input. Let it be a little dull. Whatever drifts up is fine.</p>'+
+      countdown("settle",60,"Start a minute","That\u2019s the minute. Notice what came up.")+
+      '<details class="opt"><summary>If you want: when I reach for it, what\u2019s usually going on?</summary>'+
+      '<textarea id="avoiding" data-f="avoiding" placeholder="Optional. Tired, restless, putting something off\u2026">'+esc(draft.avoiding)+'</textarea></details>';
+  }
+  function loopsList(){
+    var ls=lines(draft.loopsText);
+    if(!ls.length)return '<p class="hint">Your list will appear here. Tap the ones pulling hardest.</p>';
+    var starred=draft.starred.filter(function(x){return ls.indexOf(x)>-1});
+    var park=starred.length?'<p class="q">Park one for after you make</p><div class="chips">'+starred.map(function(s){return '<button class="chip" data-park="'+esc(s)+'" aria-pressed="'+(draft.parked===s)+'">'+esc(s)+'</button>'}).join("")+'</div><p class="hint">It will be waiting when you save the session. The rest can wait longer.</p>':'';
+    return '<ul class="loops">'+ls.map(function(l){var on=draft.starred.indexOf(l)>-1;return '<li><button data-star="'+esc(l)+'" aria-pressed="'+on+'"><span class="star" aria-hidden="true">'+(on?'\u2605':'\u2606')+'</span><span class="lt">'+esc(l)+'</span></button></li>'}).join("")+'</ul>'+park;
+  }
+  function step2(){
+    return stepHead("Empty your head","Open loops, worries, unfinished things, one per line. Five minutes at most. The aim is to set them down, not to solve them.")+
+      countdown("declutter",300,"Start five minutes","Time. Stop there, even mid-thought.")+
+      '<textarea id="loops" data-f="loopsText" class="big" placeholder="Call back about the gutters\nReturn the library books\u2026">'+esc(draft.loopsText)+'</textarea>'+
+      '<div id="loopsList">'+loopsList()+'</div>'+
+      '<p class="hint" style="margin-top:14px">If one takes under two minutes, you can do it now. Anything longer is for after, so the making window stays yours.</p>';
+  }
+  function pastCurious(){
+    var seen={},cur=lines(draft.curiousText).map(function(x){return x.toLowerCase()});
+    sessions.forEach(function(s){lines(s.curiousText).forEach(function(c){var k=c.toLowerCase();if(!seen[k]&&cur.indexOf(k)<0)seen[k]=c})});
+    var list=Object.keys(seen).slice(0,24).map(function(k){return seen[k]});
+    if(!list.length)return "";
+    return '<p class="q">From earlier sessions</p><div class="chips">'+list.map(function(c){return '<button class="chip" data-addcur="'+esc(c)+'">+ '+esc(c)+'</button>'}).join("")+'</div>';
+  }
+  function step3(){
+    return stepHead("Notice your curiosity","What are you drawn to right now? Things you want to look at closer, touch, build, or test. Don\u2019t sort or justify them.")+
+      '<textarea id="curious" data-f="curiousText" placeholder="One per line">'+esc(draft.curiousText)+'</textarea>'+
+      '<div id="pastCur">'+pastCurious()+'</div>'+
+      '<label class="q" for="common">Read the list back. What do these have in common?</label>'+
+      '<textarea id="common" data-f="common" placeholder="Optional. A word or two is plenty.">'+esc(draft.common)+'</textarea>';
+  }
+  function step4(){
+    var m=draft.material, prompts=MATS[m]||[];
+    return stepHead("Choose a material","Start with your hands: clay, drawing, or sculpture. Pick a material, then something small to try. Not a product. A mess counts.")+
+      '<div class="seg" role="group" aria-label="Material">'+Object.keys(MATS).map(function(k){return '<button data-mat="'+k+'" aria-pressed="'+(m===k)+'">'+k+'</button>'}).join("")+'</div>'+
+      (prompts.length?'<p class="q">A place to start, if you want one</p><div class="chips">'+prompts.map(function(p){return '<button class="chip" data-prompt="'+esc(p)+'" aria-pressed="'+(draft.experiment===p)+'">'+esc(p)+'</button>'}).join("")+'</div>':'')+
+      '<label class="q" for="exp">Today I\u2019m trying\u2026</label>'+
+      '<input type="text" id="exp" data-f="experiment" value="'+esc(draft.experiment)+'" placeholder="Pick one above or write your own">'+
+      '<p class="q">How long are you protecting?</p>'+
+      '<div class="seg" role="group" aria-label="Session length">'+[20,45,60,90].map(function(n){return '<button data-min="'+n+'" aria-pressed="'+(draft.minutes===n)+'">'+n+'</button>'}).join("")+'</div>'+
+      '<p class="hint">Minutes. Starting out, 20 or 45 is plenty. Longer isn\u2019t better. Returning is.</p>'+
+      '<div class="chips" style="margin-top:18px"><button class="chip" data-ready aria-pressed="'+(!!draft.ready)+'">'+(draft.ready?'\u2713 ':'')+'The materials are out and the phone has somewhere to go</button></div>'+
+      '<p class="hint">Design can come later, once this is a habit.</p>';
+  }
+  function elapsedMin(){var end=draft.endedAt||Date.now();return Math.max(0,Math.floor((end-draft.startedAt)/60000))}
+  function elapsedText(){var m=elapsedMin(),h=Math.floor(m/60);return h?h+':'+String(m%60).padStart(2,"0"):m+' min'}
+  function step5(){
+    if(!draft.startedAt){
+      return stepHead("Make","Start the clock, put this phone in another room, and go. Come back when the time is up, or whenever you\u2019re done.")+
+        (draft.experiment?'<p class="anchor">'+(draft.material?esc(draft.material)+': ':'')+esc(draft.experiment)+'</p>':'')+
+        '<p class="small">Nothing has to be finished. You don\u2019t owe the result to anyone. Stopping early is allowed and still counts.</p>';
+    }
+    var planEnd=draft.startedAt+draft.minutes*60000;
+    return stepHead("Make",null)+
+      '<p class="clock" id="clock">'+elapsedText()+'</p>'+
+      '<p class="small">Started at '+fmtTime(draft.startedAt)+'. Your '+draft.minutes+' minutes end around '+fmtTime(planEnd)+'.</p>'+
+      (draft.experiment?'<p class="anchor" style="margin-top:22px">'+esc(draft.experiment)+'</p>':'')+
+      '<p class="lede">Phone down. Go make.</p>';
+  }
+  function step6(){
+    var m=draft.startedAt?elapsedMin():0;
+    var welcome=draft.startedAt?'Welcome back. You made for '+elapsedText()+'.'+(m<draft.minutes?' Any amount counts.':''):'Welcome back.';
+    return stepHead("What did you learn about yourself?",welcome)+
+      '<p class="q">How settled do you feel now?</p>'+scale("after","settled","scattered","settled")+
+      '<p class="q">And your energy?</p>'+scale("after","energy","flat","alive")+
+      '<p class="q" style="margin-top:28px">Tap anything that happened</p>'+
+      '<div class="chips" role="group" aria-label="Observations">'+TAGS.map(function(t){return '<button class="chip" data-tag="'+esc(t)+'" aria-pressed="'+(draft.tags.indexOf(t)>-1)+'">'+esc(t)+'</button>'}).join("")+'</div>'+
+      '<label class="q" for="learned">Today I learned that I\u2026</label>'+
+      '<textarea id="learned" data-f="learned" class="big" placeholder="One line is enough. The taps above count too.">'+esc(draft.learned)+'</textarea>'+
+      '<details class="opt"><summary>More, if you want it</summary>'+
+      '<label class="q" for="held">What held my attention?</label><textarea id="held" data-f="held">'+esc(draft.held)+'</textarea>'+
+      '<label class="q" for="restless">Where did I get restless, or lose track of time?</label><textarea id="restless" data-f="restless">'+esc(draft.restless)+'</textarea>'+
+      '<label class="q" for="caught">Did anything I saw, heard, or read lately catch me? What does that say about me?</label><textarea id="caught" data-f="caught">'+esc(draft.caught)+'</textarea>'+
+      '<label class="q" for="next">Next time, I might explore\u2026</label><textarea id="next" data-f="next">'+esc(draft.next)+'</textarea></details>'+
+      '<label class="q" for="tell">Someone I could tell about today</label>'+
+      '<input type="text" id="tell" data-f="tell" value="'+esc(draft.tell)+'" placeholder="Optional. A name is enough.">'+
+      '<p class="hint">Not for approval. So the practice lives in your real life, with real people.</p>'+
+      (draft.parked?'<p class="q">Parked for after</p><p class="body">'+esc(draft.parked)+'</p>':'');
+  }
+  function delta(s){
+    if(!s.before||!s.after)return null;var out=[];
+    [["settled","Settled"],["energy","Energy"]].forEach(function(p){if(s.before[p[0]]&&s.after[p[0]])out.push(p[1]+' '+s.before[p[0]]+' \u2192 '+s.after[p[0]])});
+    return out.length?out.join('. ')+'.':null;
+  }
+  function doneView(s){
+    var d=s?delta(s):null;
+    return '<h1>Saved</h1>'+
+      (s&&s.learned?'<p class="anchor">'+esc(s.learned)+'</p>':'<p class="lede">The session is in your notes.</p>')+
+      (d?'<p class="small">'+d+'</p>':'')+
+      (s&&s.parked?'<p class="q">You parked this</p><p class="body">'+esc(s.parked)+'</p><p class="hint">Now is a reasonable time, if you have it in you. If not, it keeps.</p>':'')+
+      (s&&s.tell?'<p class="q">You thought of telling</p><p class="body">'+esc(s.tell)+'</p>':'')+
+      '<div class="stack" style="margin-top:24px"><button class="btn wide" data-act="notes">Read what you\u2019ve learned</button><button class="btn ghost wide" data-act="home">Done</button></div>';
+  }
+  function patterns(){
+    var n=sessions.length;if(n<3)return "";
+    var mats={},tags={},ds=[],de=[],mins=0,cnt=0;
+    sessions.forEach(function(s){
+      if(s.material)mats[s.material]=(mats[s.material]||0)+1;
+      (s.tags||[]).forEach(function(t){tags[t]=(tags[t]||0)+1});
+      if(s.before&&s.after){if(s.before.settled&&s.after.settled)ds.push(s.after.settled-s.before.settled);if(s.before.energy&&s.after.energy)de.push(s.after.energy-s.before.energy)}
+      if(s.startedAt&&s.endedAt){mins+=Math.round((s.endedAt-s.startedAt)/60000);cnt++}
+    });
+    var top=function(o){var k=Object.keys(o).sort(function(a,b){return o[b]-o[a]});return k.length?k[0]:null};
+    var avg=function(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null};
+    var out='<p>'+n+' sessions'+(cnt?', usually about '+Math.round(mins/cnt)+' minutes':'')+'.</p>';
+    var tm=top(mats);if(tm)out+='<p>You reach for '+esc(tm)+' most often.</p>';
+    var s1=avg(ds),e1=avg(de);
+    if(ds.length>=3){out+='<p>After making you tend to feel '+(s1>0.3?'more settled':s1<-0.3?'less settled':'about as settled')+(e1!==null&&de.length>=3?' and '+(e1>0.3?'more alive':e1<-0.3?'flatter':'about the same in energy'):'')+'.</p>'}
+    var tt=top(tags);if(tt&&tags[tt]>=2)out+='<p>\u201c'+esc(tt)+'\u201d has come up '+tags[tt]+' times.</p>';
+    return '<div class="summary">'+out+'</div>';
+  }
+  function notesView(){
+    var head='<h1>What you\u2019ve learned</h1><p class="lede">Your sessions, newest first. Read them together and patterns start to show.</p>';
+    if(!sessions.length)return head+'<p class="empty">Nothing here yet. Your first session will appear here once you save it.</p>'+'<div class="stack"><button class="btn ghost wide" data-act="home">Back</button></div>';
+    return head+patterns()+sessions.map(function(s){
+      var rows=[["Material",s.material],["Tried",s.experiment],["Held my attention",s.held],["Restless or lost time",s.restless],["Caught me",s.caught],["Next",s.next],["Curious about",lines(s.curiousText).join("; ")],["In common",s.common],["Set aside",(s.drains||[]).join(", ")],["Open loops",lines(s.loopsText).join("; ")],["Someone to tell",s.tell]].filter(function(r){return r[1]});
+      var mins=s.startedAt&&s.endedAt?Math.round((s.endedAt-s.startedAt)/60000)+' min of making':'';
+      var d=delta(s);
+      return '<article class="entry"><div class="d">'+fmtDate(s.createdAt)+(mins?'. '+mins:'')+(s.path==="short"?'. Quick session':'')+'</div>'+
+        '<p class="l">'+(s.learned?esc(s.learned):'<span class="small">No note on what you learned.</span>')+'</p>'+
+        ((s.tags||[]).length?'<p class="tags">'+esc(s.tags.join(", "))+'</p>':'')+
+        (d?'<p class="tags">'+d+'</p>':'')+
+        (rows.length?'<details><summary>More from this session</summary><dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'}).join("")+'</dl></details>':'')+
+        '<button class="linkbtn" data-del="'+esc(s.id)+'">Delete this session</button></article>';
+    }).join("")+'<div class="stack" style="margin-top:24px"><button class="btn ghost wide" data-act="home">Back</button></div>';
+  }
+  function aboutView(){
+    return '<div class="about"><h1>Why it\u2019s built this way</h1>'+
+      '<p class="lede">Each part leans on something well established about attention, mood, and habit. None of it is a rule.</p>'+
+      '<h2>Readings before and after</h2><p>Doing comes before feeling like doing. Two quick readings let you see, over time, what making does for you, which is more convincing than being told.</p>'+
+      '<h2>Refusing the pull and a minute of nothing</h2><p>Scrolling is often avoidance, and avoidance keeps whatever it avoids in place. A short, deliberate stretch of nothing lets boredom return, and ideas tend to follow boredom.</p>'+
+      '<h2>Emptying your head, capped</h2><p>Writing worries down helps only if it ends. Five minutes, then stop. Parking one task for after keeps the making window clear and still honors the task.</p>'+
+      '<h2>Curiosity before choosing</h2><p>Listing what pulls you, then noticing what the list shares, is a quiet way of learning about yourself. It also makes the next choice feel like yours.</p>'+
+      '<h2>Small material, small bite</h2><p>Clay, drawing, and sculpture ask the hands first. Twenty minutes is a real session. Growth comes from returning, not from length.</p>'+
+      '<h2>Phone away</h2><p>Willpower is unreliable. Distance is reliable.</p>'+
+      '<h2>Reflection by tapping</h2><p>Writing is optional so that reflection never becomes a chore. A tap that says \u201clost track of time\u201d is data about you.</p>'+
+      '<h2>Someone to tell</h2><p>Creative attention lasts longer inside real connection. Telling one person is not showing the work. It is letting the practice exist in your life.</p>'+
+      '<h2>What this tool refuses to do</h2><p>No streaks, reminders, scores, or missed-day counts. Guilt is a poor reason to make things.</p>'+
+      '<div class="stack" style="margin-top:28px"><button class="btn ghost wide" data-act="home">Back</button></div></div>';
+  }
+
+  function render(){
+    clearInterval(timerId);timerId=null;clearInterval(countId);countId=null;
+    var html="",navHtml="";
+    if(view==="home")html=homeView();
+    else if(view==="notes")html=notesView();
+    else if(view==="about")html=aboutView();
+    else if(view==="done")html=doneView(sessions[0]);
+    else if(view==="checkin"){html=checkinView("before");navHtml='<button class="btn ghost" data-act="home">Back</button><button class="btn" data-act="firststep">Continue</button>'}
+    else{
+      html=[step1,step2,step3,step4,step5,step6][step-1]();
+      var back='<button class="btn ghost" data-act="back">Back</button>';
+      if(step<5)navHtml=back+'<button class="btn" data-act="next">Continue</button>';
+      else if(step===5){
+        if(!draft.startedAt)navHtml=back+'<button class="btn" data-act="start">Start '+draft.minutes+' minutes</button>';
+        else navHtml='<button class="btn" data-act="return">I\u2019m back</button>';
+      }
+      else navHtml=back+'<button class="btn" data-act="save">Save session</button>';
+    }
+    app.innerHTML=html;setNav(navHtml);setStage();
+    if(view==="step"&&step===5&&draft.startedAt&&!draft.endedAt){
+      timerId=setInterval(function(){var c=document.getElementById("clock");if(c)c.textContent=elapsedText()},15000);
+    }
+  }
+  var app=document.getElementById("app"), nav=document.getElementById("nav"), navin=document.getElementById("navin");
+  function setNav(html){if(html){navin.innerHTML=html;nav.hidden=false}else{navin.innerHTML="";nav.hidden=true}}
+  function go(v,s){view=v;if(s)step=s;saveDraft();render();window.scrollTo(0,0)}
+
+  /* ---------- events ---------- */
+  document.addEventListener("click",function(e){
+    var t=e.target.closest("button");if(!t)return;
+    var act=t.getAttribute("data-act");
+    if(act==="begin"){draft=newDraft("full");go("checkin");return}
+    if(act==="short"){draft=newDraft("short");draft.minutes=20;go("checkin");return}
+    if(act==="firststep"){go("step",seq()[0]);return}
+    if(act==="resume"){if(draft.view==="checkin")go("checkin");else go("step",draft.step||seq()[0]);return}
+    if(act==="discard"){if(confirm("Discard the session in progress?")){draft=null;lsDel(LS_DRAFT);render()}return}
+    if(act==="notes"){go("notes");return}
+    if(act==="about"){go("about");return}
+    if(act==="home"){go("home");return}
+    if(act==="next"){go("step",seq()[stepPos()+1]);return}
+    if(act==="back"){var p=stepPos();if(p>0)go("step",seq()[p-1]);else go("checkin");return}
+    if(act==="start"){draft.startedAt=Date.now();draft.endedAt=null;go("step",5);return}
+    if(act==="return"){draft.endedAt=Date.now();go("step",6);return}
+    if(act==="save"){
+      var s=Object.assign({},draft);delete s.step;delete s.view;s.synced=false;
+      if(s.startedAt&&!s.endedAt)s.endedAt=Date.now();
+      sessions=sessions.filter(function(x){return x.id!==s.id});sessions.push(s);sortSessions();cacheSessions();
+      pushSession(s);draft=null;lsDel(LS_DRAFT);go("done");return;
+    }
+    var sc=t.getAttribute("data-scale");
+    if(sc!==null){var pp=sc.split(".");draft[pp[0]]=draft[pp[0]]||{};draft[pp[0]][pp[1]]=+t.getAttribute("data-v");saveDraft();
+      t.parentNode.querySelectorAll("button").forEach(function(b){b.setAttribute("aria-pressed",b===t)});return}
+    var cd=t.getAttribute("data-count");
+    if(cd!==null){
+      var box=document.getElementById(cd),n=box.querySelector("[data-n]"),left=+t.getAttribute("data-sec"),done=t.getAttribute("data-done");
+      clearInterval(countId);t.disabled=true;t.textContent="Running";
+      countId=setInterval(function(){left--;n.textContent=mmss(Math.max(left,0));if(left<=0){clearInterval(countId);countId=null;box.innerHTML='<span class="small">'+esc(done)+'</span>';if(navigator.vibrate)try{navigator.vibrate(200)}catch(x){}}},1000);
+      return;
+    }
+    var d=t.getAttribute("data-drain");
+    if(d!==null){var i=draft.drains.indexOf(d);if(i>-1)draft.drains.splice(i,1);else draft.drains.push(d);t.setAttribute("aria-pressed",i<0);saveDraft();return}
+    var tg=t.getAttribute("data-tag");
+    if(tg!==null){var ti=draft.tags.indexOf(tg);if(ti>-1)draft.tags.splice(ti,1);else draft.tags.push(tg);t.setAttribute("aria-pressed",ti<0);saveDraft();return}
+    var st=t.getAttribute("data-star");
+    if(st!==null){var j=draft.starred.indexOf(st);if(j>-1){draft.starred.splice(j,1);if(draft.parked===st)draft.parked=""}else draft.starred.push(st);saveDraft();document.getElementById("loopsList").innerHTML=loopsList();return}
+    var pk=t.getAttribute("data-park");
+    if(pk!==null){draft.parked=draft.parked===pk?"":pk;saveDraft();document.getElementById("loopsList").innerHTML=loopsList();return}
+    var ac=t.getAttribute("data-addcur");
+    if(ac!==null){draft.curiousText=(draft.curiousText.trim()?draft.curiousText.replace(/\s+$/,"")+"\n":"")+ac;var ta=document.getElementById("curious");if(ta)ta.value=draft.curiousText;saveDraft();document.getElementById("pastCur").innerHTML=pastCurious();return}
+    var mt=t.getAttribute("data-mat");
+    if(mt!==null){draft.material=mt;saveDraft();render();return}
+    var pr=t.getAttribute("data-prompt");
+    if(pr!==null){draft.experiment=pr;saveDraft();render();return}
+    var mn=t.getAttribute("data-min");
+    if(mn!==null){draft.minutes=+mn;saveDraft();render();return}
+    if(t.hasAttribute("data-ready")){draft.ready=!draft.ready;saveDraft();render();return}
+    var del=t.getAttribute("data-del");
+    if(del!==null){
+      if(!confirm("Delete this session? This can\u2019t be undone."))return;
+      sessions=sessions.filter(function(x){return x.id!==del});cacheSessions();
+      if(db&&userId)sessRef(del).delete().catch(function(){});
+      render();return;
+    }
+  });
+  var listT=null;
+  document.addEventListener("input",function(e){
+    var f=e.target.getAttribute&&e.target.getAttribute("data-f");if(!f||!draft)return;
+    draft[f]=e.target.value;saveDraftSoon();
+    if(f==="loopsText"){clearTimeout(listT);listT=setTimeout(function(){
+      var ls=lines(draft.loopsText);draft.starred=draft.starred.filter(function(x){return ls.indexOf(x)>-1});if(ls.indexOf(draft.parked)<0)draft.parked="";
+      var el=document.getElementById("loopsList");if(el)el.innerHTML=loopsList();
+    },400)}
+  });
+  document.addEventListener("visibilitychange",function(){if(!document.hidden&&view==="step"&&step===5){var c=document.getElementById("clock");if(c)c.textContent=elapsedText()}});
+
+  /* migrate sessions saved by the first version */
+  (function(){var old=lsGet("ms.sessions",null);if(old&&old.length){var ids={};sessions.forEach(function(s){ids[s.id]=1});old.forEach(function(s){if(!ids[s.id]){s.before=s.before||{};s.after=s.after||{};s.tags=s.tags||[];s.synced=false;sessions.push(s)}});sortSessions();cacheSessions();lsDel("ms.sessions")}})();
+
+  if(draft&&draft.startedAt&&!draft.endedAt){view="step";step=5}
+  render();connect();
+})();
+</script>
+</body>
+</html>
