@@ -156,7 +156,7 @@ details.opt{margin-top:22px}
   var TAGS=["Lost track of time","Got restless","Wanted to stop early","Kept going past the time","Surprised myself","Kept going back to one thing","Felt clumsy","Felt calm","Judged the work","Forgot about the phone"];
   var FULL=[1,2,3,4,5,6], SHORT=[4,5,6];
 
-  var view="home", step=1, timerId=null, countId=null;
+  var confirmKey=null, view="home", step=1, timerId=null, countId=null;
   var draft=lsGet(LS_DRAFT,null);
   var sessions=lsGet(LS_SESS,[]);
   var db=null, userId=null;
@@ -223,7 +223,7 @@ details.opt{margin-top:22px}
 
   /* ---------- views ---------- */
   function homeView(){
-    var resume=draft?'<button class="btn wide" data-act="resume">Resume your session</button><button class="btn ghost wide" data-act="discard">Start over</button>'
+    var resume=draft?'<button class="btn wide" data-act="resume">Resume your session</button>'+(confirmKey==="discard"?'<p class="q">Discard the session in progress?</p><button class="btn wide" data-act="discard-yes">Yes, start over</button><button class="btn ghost wide" data-act="discard-no">Keep it</button>':'<button class="btn ghost wide" data-act="discard">Start over</button>')
       :'<button class="btn wide" data-act="begin">Begin a session</button><button class="btn ghost wide" data-act="short">Just make (20 minutes, no setup)</button>';
     var n=sessions.length;
     return '<h1>A private making session</h1>'+
@@ -372,7 +372,7 @@ details.opt{margin-top:22px}
         ((s.tags||[]).length?'<p class="tags">'+esc(s.tags.join(", "))+'</p>':'')+
         (d?'<p class="tags">'+d+'</p>':'')+
         (rows.length?'<details><summary>More from this session</summary><dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'}).join("")+'</dl></details>':'')+
-        '<button class="linkbtn" data-del="'+esc(s.id)+'">Delete this session</button></article>';
+        (confirmKey==="del:"+s.id?'<p class="small">Delete this session? This can\u2019t be undone.</p><button class="btn sm" data-delyes="'+esc(s.id)+'">Yes, delete</button> <button class="btn sm ghost" data-delno="1">Keep</button>':'<button class="linkbtn" data-del="'+esc(s.id)+'">Delete this session</button>')+'</article>';
     }).join("")+'<div class="stack" style="margin-top:24px"><button class="btn ghost wide" data-act="export">Download my notes</button><button class="btn ghost wide" data-act="home">Back</button></div>';
   }
   function aboutView(){
@@ -415,7 +415,7 @@ details.opt{margin-top:22px}
   }
   var app=document.getElementById("app"), nav=document.getElementById("nav"), navin=document.getElementById("navin");
   function setNav(html){if(html){navin.innerHTML=html;nav.hidden=false}else{navin.innerHTML="";nav.hidden=true}}
-  function go(v,s){view=v;if(s)step=s;saveDraft();render();window.scrollTo(0,0)}
+  function go(v,s){confirmKey=null;view=v;if(s)step=s;saveDraft();render();window.scrollTo(0,0)}
 
   function exportNotes(){
     var json=JSON.stringify(sessions,null,2),fn="making-session-notes.json";
@@ -432,7 +432,9 @@ details.opt{margin-top:22px}
     if(act==="short"){draft=newDraft("short");draft.minutes=20;go("checkin");return}
     if(act==="firststep"){go("step",seq()[0]);return}
     if(act==="resume"){if(draft.view==="checkin")go("checkin");else go("step",draft.step||seq()[0]);return}
-    if(act==="discard"){if(confirm("Discard the session in progress?")){draft=null;lsDel(LS_DRAFT);render()}return}
+    if(act==="discard"){confirmKey="discard";render();return}
+    if(act==="discard-no"){confirmKey=null;render();return}
+    if(act==="discard-yes"){confirmKey=null;draft=null;lsDel(LS_DRAFT);render();return}
     if(act==="notes"){go("notes");return}
     if(act==="export"){exportNotes();return}
     if(act==="about"){go("about");return}
@@ -477,11 +479,16 @@ details.opt{margin-top:22px}
     if(t.hasAttribute("data-ready")){draft.ready=!draft.ready;saveDraft();render();return}
     var del=t.getAttribute("data-del");
     if(del!==null){
-      if(!confirm("Delete this session? This can\u2019t be undone."))return;
-      sessions=sessions.filter(function(x){return x.id!==del});cacheSessions();
-      if(db&&userId)sessRef(del).delete().catch(function(){});
+      confirmKey="del:"+del;render();return;
+    }
+    var dy=t.getAttribute("data-delyes");
+    if(dy!==null){
+      var delId=dy;confirmKey=null;
+      sessions=sessions.filter(function(x){return x.id!==delId});cacheSessions();
+      if(db&&userId)sessRef(delId).delete().catch(function(){});
       render();return;
     }
+    if(t.hasAttribute("data-delno")){confirmKey=null;render();return}
   });
   var listT=null;
   document.addEventListener("input",function(e){
