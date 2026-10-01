@@ -14,7 +14,11 @@ A session has these steps:
 6. Make for 20 to 90 minutes with your phone away.
 7. Second check-in, tap what you noticed, and write what you learned about yourself.
 
-Your notes show past sessions plus statistics and trends. Nothing is scored, and there are no streaks or reminders.
+Your notes show past sessions plus statistics and trends. Nothing is scored, and there are no streaks.
+
+## Schedule and check-ins
+
+The "Plan and calendar" screen lets you pick days, a time, and a length, and commit to the plan. A link adds the plan to Google Calendar as a weekly event. The "Weekly check-in" screen compares planned and finished sessions and records what got in the way and what to change. The plan is also saved to the artifact database (`shared/plan`) so Claude can read it when it sets up calendar events and check-ins.
 
 Sessions are saved in the browser. The notes screen has a button to download them as a JSON file.
 
