@@ -223,7 +223,7 @@ details.opt{margin-top:22px}
 
   /* ---------- views ---------- */
   function homeView(){
-    var resume=draft?'<button class="btn wide" data-act="resume">Resume your session</button>'+(confirmKey==="discard"?'<p class="q">Discard the session in progress?</p><button class="btn wide" data-act="discard-yes">Yes, start over</button><button class="btn ghost wide" data-act="discard-no">Keep it</button>':'<button class="btn ghost wide" data-act="discard">Start over</button>')
+    var resume=draft?'<button class="btn wide" data-act="resume">Resume your session</button>'+(confirmKey==="discard"?'<p class="q">Discard the session in progress?</p><button class="btn wide" data-act="discard-yes">Yes, start over</button><button class="btn ghost wide" data-act="discard-no">Keep session</button>':'<button class="btn ghost wide" data-act="discard">Start over</button>')
       :'<button class="btn wide" data-act="begin">Begin a session</button><button class="btn ghost wide" data-act="short">Just make (20 minutes, no setup)</button>';
     var n=sessions.length;
     return '<h1>A private making session</h1>'+
@@ -232,22 +232,22 @@ details.opt{margin-top:22px}
       '<div class="stack">'+resume+
       '<button class="btn ghost wide" data-act="notes">Read your notes'+(n?' ('+n+')':'')+'</button>'+
       '<button class="btn ghost wide" data-act="about">Why it works this way</button></div>'+
-      '<p class="foot">This is a habit tool, not a treatment. If low mood, worry, or trouble focusing keep getting in the way of daily life, talk to someone you trust or a clinician.</p>';
+      '<p class="foot">This app is a habit tool, not a treatment. If low mood, worry, or trouble focusing keep getting in the way of daily life, talk to someone you trust or a clinician.</p>';
   }
   function checkinView(phase){
     var before=phase==="before";
     return '<p class="count">'+(before?'Before you begin':'Now that you’re back')+'</p>'+
       '<h1>'+(before?'Quick check-in':'Second check-in')+'</h1>'+
-      '<p class="lede">'+(before?'Two taps to record how you feel right now. It isn’t a test.':'Two taps to record how you feel now, so you can compare it with before.')+'</p>'+
+      '<p class="lede">'+(before?'Two taps to record how you feel right now. It isn’t a test.':'Two taps to record how you feel now, so you can compare with your first check-in.')+'</p>'+
       '<p class="q">How settled do you feel?</p>'+scale(phase,"settled","scattered","settled")+
       '<p class="q">How much energy do you have?</p>'+scale(phase,"energy","low energy","high energy")+
-      '<p class="hint">You can skip this. It’s more useful if you do it most sessions.</p>';
+      '<p class="hint">You can skip this check-in. The check-in is more useful if you do it most sessions.</p>';
   }
   function step1(){
     return stepHead("Put your distractions away","Pick what you’re setting aside for this session.")+
       '<div class="chips" role="group" aria-label="What you’re setting aside">'+DRAINS.map(function(d){return '<button class="chip" data-drain="'+esc(d)+'" aria-pressed="'+(draft.drains.indexOf(d)>-1)+'">'+esc(d)+'</button>'}).join("")+'</div>'+
       '<p class="q">One minute of nothing</p>'+
-      '<p class="body small">Put your phone face down and do nothing for one minute. It may feel dull. That’s fine.</p>'+
+      '<p class="body small">Put your phone face down and do nothing for one minute. The minute may feel dull. Dull is fine.</p>'+
       countdown("settle",60,"Start one minute","Time’s up. Did anything come to mind?")+
       '<details class="opt"><summary>Optional: when I reach for my phone, what’s usually going on?</summary>'+
       '<textarea id="avoiding" data-f="avoiding" placeholder="For example: tired, bored, putting something off">'+esc(draft.avoiding)+'</textarea></details>';
@@ -256,7 +256,7 @@ details.opt{margin-top:22px}
     var ls=lines(draft.loopsText);
     if(!ls.length)return '<p class="hint">Your list will appear here. Tap the ones bothering you most.</p>';
     var starred=draft.starred.filter(function(x){return ls.indexOf(x)>-1});
-    var park=starred.length?'<p class="q">Save one task for after</p><div class="chips">'+starred.map(function(s){return '<button class="chip" data-park="'+esc(s)+'" aria-pressed="'+(draft.parked===s)+'">'+esc(s)+'</button>'}).join("")+'</div><p class="hint">It will show up again when you finish. The rest can wait.</p>':'';
+    var park=starred.length?'<p class="q">Save one task for after</p><div class="chips">'+starred.map(function(s){return '<button class="chip" data-park="'+esc(s)+'" aria-pressed="'+(draft.parked===s)+'">'+esc(s)+'</button>'}).join("")+'</div><p class="hint">That task will show up again when you finish. The rest can wait.</p>':'';
     return '<ul class="loops">'+ls.map(function(l){var on=draft.starred.indexOf(l)>-1;return '<li><button data-star="'+esc(l)+'" aria-pressed="'+on+'"><span class="star" aria-hidden="true">'+(on?'\u2605':'\u2606')+'</span><span class="lt">'+esc(l)+'</span></button></li>'}).join("")+'</ul>'+park;
   }
   function step2(){
@@ -282,7 +282,7 @@ details.opt{margin-top:22px}
   }
   function step4(){
     var m=draft.material, prompts=MATS[m]||[];
-    return stepHead("Choose a material","Pick clay, drawing, sculpture, or design, then pick something small to try. You don’t need to finish anything or make it good.")+
+    return stepHead("Choose a material","Pick clay, drawing, sculpture, or design, then pick something small to try. You don’t need to finish anything or make anything good.")+
       '<div class="seg" role="group" aria-label="Material">'+Object.keys(MATS).map(function(k){return '<button data-mat="'+k+'" aria-pressed="'+(m===k)+'">'+k+'</button>'}).join("")+'</div>'+
       (prompts.length?'<p class="q">Ideas, if you want one</p><div class="chips">'+prompts.map(function(p){return '<button class="chip" data-prompt="'+esc(p)+'" aria-pressed="'+(draft.experiment===p)+'">'+esc(p)+'</button>'}).join("")+'</div>':'')+
       '<label class="q" for="exp">Today I’m trying…</label>'+
@@ -299,7 +299,7 @@ details.opt{margin-top:22px}
     if(!draft.startedAt){
       return stepHead("Make","Start the timer, put your phone in another room, and begin. Come back when time is up or when you’re done.")+
         (draft.experiment?'<p class="anchor">'+(draft.material?esc(draft.material)+': ':'')+esc(draft.experiment)+'</p>':'')+
-        '<p class="small">Nothing has to be finished, and you don’t have to show it to anyone. You can stop early.</p>';
+        '<p class="small">Nothing has to be finished, and you don’t have to show your work to anyone. You can stop early.</p>';
     }
     var planEnd=draft.startedAt+draft.minutes*60000;
     return stepHead("Make",null)+
@@ -321,11 +321,11 @@ details.opt{margin-top:22px}
       '<details class="opt"><summary>More (optional)</summary>'+
       '<label class="q" for="held">What held my attention?</label><textarea id="held" data-f="held">'+esc(draft.held)+'</textarea>'+
       '<label class="q" for="restless">Where did I get restless, or lose track of time?</label><textarea id="restless" data-f="restless">'+esc(draft.restless)+'</textarea>'+
-      '<label class="q" for="caught">Did anything I saw, heard, or read lately stand out to me? What does that say about me?</label><textarea id="caught" data-f="caught">'+esc(draft.caught)+'</textarea>'+
+      '<label class="q" for="caught">Did anything I saw, heard, or read lately stand out to me? What does my reaction say about me?</label><textarea id="caught" data-f="caught">'+esc(draft.caught)+'</textarea>'+
       '<label class="q" for="next">Next time I might try…</label><textarea id="next" data-f="next">'+esc(draft.next)+'</textarea></details>'+
       '<label class="q" for="tell">Someone I could tell about today</label>'+
       '<input type="text" id="tell" data-f="tell" value="'+esc(draft.tell)+'" placeholder="Optional. A name is enough.">'+
-      '<p class="hint">Not to get approval. It’s just a way to share what you did with someone.</p>'+
+      '<p class="hint">Not to get approval. Telling someone is just a way to share what you did.</p>'+
       (draft.parked?'<p class="q">Saved for after</p><p class="body">'+esc(draft.parked)+'</p>':'');
   }
   function delta(s){
@@ -338,7 +338,7 @@ details.opt{margin-top:22px}
     return '<h1>Saved</h1>'+
       (s&&s.learned?'<p class="anchor">'+esc(s.learned)+'</p>':'<p class="lede">The session is in your notes.</p>')+
       (d?'<p class="small">'+d+'</p>':'')+
-      (s&&s.parked?'<p class="q">You saved this for later</p><p class="body">'+esc(s.parked)+'</p><p class="hint">You can do it now if you have the energy. If not, it can wait.</p>':'')+
+      (s&&s.parked?'<p class="q">You saved this task for later</p><p class="body">'+esc(s.parked)+'</p><p class="hint">You can do the task now if you have the energy. If not, the task can wait.</p>':'')+
       (s&&s.tell?'<p class="q">You could tell</p><p class="body">'+esc(s.tell)+'</p>':'')+
       '<div class="stack" style="margin-top:24px"><button class="btn wide" data-act="notes">Read your notes</button><button class="btn ghost wide" data-act="home">Done</button></div>';
   }
@@ -378,13 +378,13 @@ details.opt{margin-top:22px}
   function aboutView(){
     var items=[
       ["Check-ins before and after","Starting an activity often comes before feeling motivated. Two quick check-ins let you see over time how making affects you."],
-      ["Putting distractions away, and one minute of nothing","Scrolling is often a way to avoid something, which keeps it around. A short stretch of doing nothing lets you get bored, and ideas often come after boredom."],
+      ["Putting distractions away, and one minute of nothing","Scrolling is often a way to avoid something. Avoiding a problem usually keeps the problem from going away. A short stretch of doing nothing lets you get bored, and ideas often come after boredom."],
       ["Writing down what’s on your mind, with a time limit","Writing worries down helps only if it has an end. Stop after five minutes. Saving one task for later keeps your making time free without ignoring the task."],
-      ["Listing what you’re curious about","Listing what interests you, then looking for what the items share, shows you something about yourself. It also makes the next choice feel like yours."],
+      ["Listing what you’re curious about","Listing what interests you, then looking for what the items share, shows you something about yourself. Listing also makes the next choice feel like yours."],
       ["Small materials, short sessions","Clay, drawing, sculpture, and design all start with small experiments you do with your hands. Twenty minutes is a real session. Coming back matters more than how long you work."],
       ["Phone away","Willpower is unreliable. Putting the phone in another room works better."],
       ["Reflecting by tapping","Writing is optional so that reflecting doesn’t become a chore. Tapping “lost track of time” still tells you something about yourself."],
-      ["Someone to tell","You’re more likely to keep a habit if someone else knows about it. Telling one person isn’t showing your work. It just keeps this part of your life from being secret."],
+      ["Someone to tell","You’re more likely to keep a habit if someone else knows about the habit. Telling one person isn’t showing your work. Telling just keeps this part of your life from being secret."],
       ["What this tool leaves out","No streaks, reminders, scores, or missed-day counts. Guilt isn’t a good reason to make things."]
     ];
     return '<div class="about"><h1>Why it works this way</h1>'+
