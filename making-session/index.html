@@ -417,6 +417,13 @@ details.opt{margin-top:22px}
   function setNav(html){if(html){navin.innerHTML=html;nav.hidden=false}else{navin.innerHTML="";nav.hidden=true}}
   function go(v,s){view=v;if(s)step=s;saveDraft();render();window.scrollTo(0,0)}
 
+  function exportNotes(){
+    var json=JSON.stringify(sessions,null,2),fn="making-session-notes.json";
+    function plain(){try{var b=new Blob([json],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fn;document.body.appendChild(a);a.click();a.remove()}catch(x){}}
+    if(window.claude&&typeof window.claude.use==="function"){
+      window.claude.use("downloads").then(function(d){if(d)return d.save({filename:fn,data:json});plain()}).catch(function(e){if(!e||e.code!=="declined")plain()});
+    }else plain();
+  }
   /* ---------- events ---------- */
   document.addEventListener("click",function(e){
     var t=e.target.closest("button");if(!t)return;
@@ -427,7 +434,7 @@ details.opt{margin-top:22px}
     if(act==="resume"){if(draft.view==="checkin")go("checkin");else go("step",draft.step||seq()[0]);return}
     if(act==="discard"){if(confirm("Discard the session in progress?")){draft=null;lsDel(LS_DRAFT);render()}return}
     if(act==="notes"){go("notes");return}
-    if(act==="export"){try{var b=new Blob([JSON.stringify(sessions,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="making-session-notes.json";document.body.appendChild(a);a.click();a.remove()}catch(x){}return}
+    if(act==="export"){exportNotes();return}
     if(act==="about"){go("about");return}
     if(act==="home"){go("home");return}
     if(act==="next"){go("step",seq()[stepPos()+1]);return}
