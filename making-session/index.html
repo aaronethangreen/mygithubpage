@@ -148,10 +148,10 @@ details.opt{margin-top:22px}
 
   var DRAINS=["Phone","Social feeds","Email","News","Messages","Podcasts"];
   var MATS={
-    "Clay":["Pinch a small form with your eyes closed","Make ten little forms in ten minutes, no keeping","Press textures from around the house into a slab","Roll coils and let them find their own shape"],
+    "Clay":["Pinch a small form with your eyes closed","Make ten little forms in ten minutes, no keeping","Press textures from around the house into a slab","Roll coils and see what shape they end up in"],
     "Drawing":["Draw the same object five times, faster each time","Draw only the shadows in the room","Blind contour of your own hand","Fill a page with one kind of mark"],
-    "Design":["Redesign one everyday object you use daily, sketch only","Make a poster using only type and one color","Lay out a page of cut paper scraps until the arrangement feels right","Sketch three ways to organize one shelf or drawer"],
-    "Sculpture":["Build something that balances, from what\u2019s in a drawer","Bend a line drawing out of wire","Stack and restack three objects until one feels right","Carve into a bar of soap or a block of foam"]
+    "Design":["Redesign one everyday object you use daily, sketch only","Make a poster using only type and one color","Arrange cut paper scraps on a page and keep the arrangement you like best","Sketch three ways to organize one shelf or drawer"],
+    "Sculpture":["Build something that balances, from what’s in a drawer","Bend a line drawing out of wire","Stack three objects in different ways and keep the one you like best","Carve into a bar of soap or a block of foam"]
   };
   var TAGS=["Lost track of time","Got restless","Wanted to stop early","Kept going past the time","Surprised myself","Kept going back to one thing","Felt clumsy","Felt calm","Judged the work","Forgot about the phone"];
   var FULL=[1,2,3,4,5,6], SHORT=[4,5,6];
@@ -227,44 +227,44 @@ details.opt{margin-top:22px}
       :'<button class="btn wide" data-act="begin">Begin a session</button><button class="btn ghost wide" data-act="short">Just make (20 minutes, no setup)</button>';
     var n=sessions.length;
     return '<h1>A private making session</h1>'+
-      '<p class="anchor">The creative act is a way of learning about yourself.</p>'+
-      '<p class="lede">Nothing here is scored, counted, or reminded. There are no streaks to keep. Any session you return to is enough.</p>'+
+      '<p class="anchor">Making things is a way to learn about yourself.</p>'+
+      '<p class="lede">Nothing here is scored or counted, and there are no reminders or streaks. Any session you do is enough.</p>'+
       '<div class="stack">'+resume+
-      '<button class="btn ghost wide" data-act="notes">Read what you\u2019ve learned'+(n?' ('+n+')':'')+'</button>'+
-      '<button class="btn ghost wide" data-act="about">Why it\u2019s built this way</button></div>'+
-      '<p class="foot">This is a practice for attention and making, not a treatment. If low mood, worry, or scattered attention keep getting in the way of ordinary life, it\u2019s worth talking with someone you trust or a clinician.</p>';
+      '<button class="btn ghost wide" data-act="notes">Read your notes'+(n?' ('+n+')':'')+'</button>'+
+      '<button class="btn ghost wide" data-act="about">Why it works this way</button></div>'+
+      '<p class="foot">This is a habit tool, not a treatment. If low mood, worry, or trouble focusing keep getting in the way of daily life, talk to someone you trust or a clinician.</p>';
   }
   function checkinView(phase){
     var before=phase==="before";
-    return '<p class="count">'+(before?'Before you begin':'Now that you\u2019re back')+'</p>'+
-      '<h1>'+(before?'A quick reading':'A second reading')+'</h1>'+
-      '<p class="lede">Two taps. Not a test, just where you are right now'+(before?'':', so you can see what making does for you over time')+'.</p>'+
+    return '<p class="count">'+(before?'Before you begin':'Now that you’re back')+'</p>'+
+      '<h1>'+(before?'Quick check-in':'Second check-in')+'</h1>'+
+      '<p class="lede">'+(before?'Two taps to record how you feel right now. It isn’t a test.':'Two taps to record how you feel now, so you can compare it with before.')+'</p>'+
       '<p class="q">How settled do you feel?</p>'+scale(phase,"settled","scattered","settled")+
-      '<p class="q">How much energy do you have?</p>'+scale(phase,"energy","flat","alive")+
-      '<p class="hint">You can skip this. It\u2019s most useful when you do it most times.</p>';
+      '<p class="q">How much energy do you have?</p>'+scale(phase,"energy","low energy","high energy")+
+      '<p class="hint">You can skip this. It’s more useful if you do it most sessions.</p>';
   }
   function step1(){
-    return stepHead("Refuse the pull","Choose what you\u2019re setting aside for this session. Your attention is yours, and you\u2019re taking it back with your hands.")+
-      '<div class="chips" role="group" aria-label="What you\u2019re setting aside">'+DRAINS.map(function(d){return '<button class="chip" data-drain="'+esc(d)+'" aria-pressed="'+(draft.drains.indexOf(d)>-1)+'">'+esc(d)+'</button>'}).join("")+'</div>'+
+    return stepHead("Put your distractions away","Pick what you’re setting aside for this session.")+
+      '<div class="chips" role="group" aria-label="What you’re setting aside">'+DRAINS.map(function(d){return '<button class="chip" data-drain="'+esc(d)+'" aria-pressed="'+(draft.drains.indexOf(d)>-1)+'">'+esc(d)+'</button>'}).join("")+'</div>'+
       '<p class="q">One minute of nothing</p>'+
-      '<p class="body small">Phone face down. No input. Let it be a little dull. Whatever drifts up is fine.</p>'+
-      countdown("settle",60,"Start a minute","That\u2019s the minute. Notice what came up.")+
-      '<details class="opt"><summary>If you want: when I reach for it, what\u2019s usually going on?</summary>'+
-      '<textarea id="avoiding" data-f="avoiding" placeholder="Optional. Tired, restless, putting something off\u2026">'+esc(draft.avoiding)+'</textarea></details>';
+      '<p class="body small">Put your phone face down and do nothing for one minute. It may feel dull. That’s fine.</p>'+
+      countdown("settle",60,"Start one minute","Time’s up. Did anything come to mind?")+
+      '<details class="opt"><summary>Optional: when I reach for my phone, what’s usually going on?</summary>'+
+      '<textarea id="avoiding" data-f="avoiding" placeholder="For example: tired, bored, putting something off">'+esc(draft.avoiding)+'</textarea></details>';
   }
   function loopsList(){
     var ls=lines(draft.loopsText);
-    if(!ls.length)return '<p class="hint">Your list will appear here. Tap the ones pulling hardest.</p>';
+    if(!ls.length)return '<p class="hint">Your list will appear here. Tap the ones bothering you most.</p>';
     var starred=draft.starred.filter(function(x){return ls.indexOf(x)>-1});
-    var park=starred.length?'<p class="q">Park one for after you make</p><div class="chips">'+starred.map(function(s){return '<button class="chip" data-park="'+esc(s)+'" aria-pressed="'+(draft.parked===s)+'">'+esc(s)+'</button>'}).join("")+'</div><p class="hint">It will be waiting when you save the session. The rest can wait longer.</p>':'';
+    var park=starred.length?'<p class="q">Save one task for after</p><div class="chips">'+starred.map(function(s){return '<button class="chip" data-park="'+esc(s)+'" aria-pressed="'+(draft.parked===s)+'">'+esc(s)+'</button>'}).join("")+'</div><p class="hint">It will show up again when you finish. The rest can wait.</p>':'';
     return '<ul class="loops">'+ls.map(function(l){var on=draft.starred.indexOf(l)>-1;return '<li><button data-star="'+esc(l)+'" aria-pressed="'+on+'"><span class="star" aria-hidden="true">'+(on?'\u2605':'\u2606')+'</span><span class="lt">'+esc(l)+'</span></button></li>'}).join("")+'</ul>'+park;
   }
   function step2(){
-    return stepHead("Empty your head","Open loops, worries, unfinished things, one per line. Five minutes at most. The aim is to set them down, not to solve them.")+
-      countdown("declutter",300,"Start five minutes","Time. Stop there, even mid-thought.")+
-      '<textarea id="loops" data-f="loopsText" class="big" placeholder="Call back about the gutters\nReturn the library books\u2026">'+esc(draft.loopsText)+'</textarea>'+
+    return stepHead("Write down what’s on your mind","List worries, unfinished tasks, and anything else on your mind, one per line. Spend five minutes at most. You’re just getting them out of your head, not solving them.")+
+      countdown("declutter",300,"Start five minutes","Time’s up. Stop here, even if you’re not finished.")+
+      '<textarea id="loops" data-f="loopsText" class="big" placeholder="Call back about the gutters\nReturn the library books…">'+esc(draft.loopsText)+'</textarea>'+
       '<div id="loopsList">'+loopsList()+'</div>'+
-      '<p class="hint" style="margin-top:14px">If one takes under two minutes, you can do it now. Anything longer is for after, so the making window stays yours.</p>';
+      '<p class="hint" style="margin-top:14px">If a task takes under two minutes, do it now. Leave longer ones for later so your making time stays free.</p>';
   }
   function pastCurious(){
     var seen={},cur=lines(draft.curiousText).map(function(x){return x.toLowerCase()});
@@ -274,59 +274,59 @@ details.opt{margin-top:22px}
     return '<p class="q">From earlier sessions</p><div class="chips">'+list.map(function(c){return '<button class="chip" data-addcur="'+esc(c)+'">+ '+esc(c)+'</button>'}).join("")+'</div>';
   }
   function step3(){
-    return stepHead("Notice your curiosity","What are you drawn to right now? Things you want to look at closer, touch, build, or test. Don\u2019t sort or justify them.")+
+    return stepHead("What are you curious about?","List things you want to look at, touch, build, or try. Don’t sort them or explain them.")+
       '<textarea id="curious" data-f="curiousText" placeholder="One per line">'+esc(draft.curiousText)+'</textarea>'+
       '<div id="pastCur">'+pastCurious()+'</div>'+
-      '<label class="q" for="common">Read the list back. What do these have in common?</label>'+
+      '<label class="q" for="common">Read your list. What do these things have in common?</label>'+
       '<textarea id="common" data-f="common" placeholder="Optional. A word or two is plenty.">'+esc(draft.common)+'</textarea>';
   }
   function step4(){
     var m=draft.material, prompts=MATS[m]||[];
-    return stepHead("Choose a material","Clay, drawing, sculpture, or design. Pick a material, then something small to try. Not a product. A mess counts.")+
+    return stepHead("Choose a material","Pick clay, drawing, sculpture, or design, then pick something small to try. You don’t need to finish anything or make it good.")+
       '<div class="seg" role="group" aria-label="Material">'+Object.keys(MATS).map(function(k){return '<button data-mat="'+k+'" aria-pressed="'+(m===k)+'">'+k+'</button>'}).join("")+'</div>'+
-      (prompts.length?'<p class="q">A place to start, if you want one</p><div class="chips">'+prompts.map(function(p){return '<button class="chip" data-prompt="'+esc(p)+'" aria-pressed="'+(draft.experiment===p)+'">'+esc(p)+'</button>'}).join("")+'</div>':'')+
-      '<label class="q" for="exp">Today I\u2019m trying\u2026</label>'+
+      (prompts.length?'<p class="q">Ideas, if you want one</p><div class="chips">'+prompts.map(function(p){return '<button class="chip" data-prompt="'+esc(p)+'" aria-pressed="'+(draft.experiment===p)+'">'+esc(p)+'</button>'}).join("")+'</div>':'')+
+      '<label class="q" for="exp">Today I’m trying…</label>'+
       '<input type="text" id="exp" data-f="experiment" value="'+esc(draft.experiment)+'" placeholder="Pick one above or write your own">'+
-      '<p class="q">How long are you protecting?</p>'+
+      '<p class="q">How long will you work?</p>'+
       '<div class="seg" role="group" aria-label="Session length">'+[20,45,60,90].map(function(n){return '<button data-min="'+n+'" aria-pressed="'+(draft.minutes===n)+'">'+n+'</button>'}).join("")+'</div>'+
-      '<p class="hint">Minutes. Starting out, 20 or 45 is plenty. Longer isn\u2019t better. Returning is.</p>'+
-      '<div class="chips" style="margin-top:18px"><button class="chip" data-ready aria-pressed="'+(!!draft.ready)+'">'+(draft.ready?'\u2713 ':'')+'The materials are out and the phone has somewhere to go</button></div>'+
+      '<p class="hint">Minutes. 20 or 45 is plenty to start. Coming back often matters more than long sessions.</p>'+
+      '<div class="chips" style="margin-top:18px"><button class="chip" data-ready aria-pressed="'+(!!draft.ready)+'">'+(draft.ready?'\u2713 ':'')+'My materials are out and my phone is out of reach</button></div>'+
       '';
   }
   function elapsedMin(){var end=draft.endedAt||Date.now();return Math.max(0,Math.floor((end-draft.startedAt)/60000))}
   function elapsedText(){var m=elapsedMin(),h=Math.floor(m/60);return h?h+':'+String(m%60).padStart(2,"0"):m+' min'}
   function step5(){
     if(!draft.startedAt){
-      return stepHead("Make","Start the clock, put this phone in another room, and go. Come back when the time is up, or whenever you\u2019re done.")+
+      return stepHead("Make","Start the timer, put your phone in another room, and begin. Come back when time is up or when you’re done.")+
         (draft.experiment?'<p class="anchor">'+(draft.material?esc(draft.material)+': ':'')+esc(draft.experiment)+'</p>':'')+
-        '<p class="small">Nothing has to be finished. You don\u2019t owe the result to anyone. Stopping early is allowed and still counts.</p>';
+        '<p class="small">Nothing has to be finished, and you don’t have to show it to anyone. You can stop early.</p>';
     }
     var planEnd=draft.startedAt+draft.minutes*60000;
     return stepHead("Make",null)+
       '<p class="clock" id="clock">'+elapsedText()+'</p>'+
       '<p class="small">Started at '+fmtTime(draft.startedAt)+'. Your '+draft.minutes+' minutes end around '+fmtTime(planEnd)+'.</p>'+
       (draft.experiment?'<p class="anchor" style="margin-top:22px">'+esc(draft.experiment)+'</p>':'')+
-      '<p class="lede">Phone down. Go make.</p>';
+      '<p class="lede">Phone away. Go make something.</p>';
   }
   function step6(){
     var m=draft.startedAt?elapsedMin():0;
     var welcome=draft.startedAt?'Welcome back. You made for '+elapsedText()+'.'+(m<draft.minutes?' Any amount counts.':''):'Welcome back.';
     return stepHead("What did you learn about yourself?",welcome)+
       '<p class="q">How settled do you feel now?</p>'+scale("after","settled","scattered","settled")+
-      '<p class="q">And your energy?</p>'+scale("after","energy","flat","alive")+
-      '<p class="q" style="margin-top:28px">Tap anything that happened</p>'+
+      '<p class="q">And your energy?</p>'+scale("after","energy","low energy","high energy")+
+      '<p class="q" style="margin-top:28px">Tap anything that applies</p>'+
       '<div class="chips" role="group" aria-label="Observations">'+TAGS.map(function(t){return '<button class="chip" data-tag="'+esc(t)+'" aria-pressed="'+(draft.tags.indexOf(t)>-1)+'">'+esc(t)+'</button>'}).join("")+'</div>'+
-      '<label class="q" for="learned">Today I learned that I\u2026</label>'+
+      '<label class="q" for="learned">Today I learned that I…</label>'+
       '<textarea id="learned" data-f="learned" class="big" placeholder="One line is enough. The taps above count too.">'+esc(draft.learned)+'</textarea>'+
-      '<details class="opt"><summary>More, if you want it</summary>'+
+      '<details class="opt"><summary>More (optional)</summary>'+
       '<label class="q" for="held">What held my attention?</label><textarea id="held" data-f="held">'+esc(draft.held)+'</textarea>'+
       '<label class="q" for="restless">Where did I get restless, or lose track of time?</label><textarea id="restless" data-f="restless">'+esc(draft.restless)+'</textarea>'+
-      '<label class="q" for="caught">Did anything I saw, heard, or read lately catch me? What does that say about me?</label><textarea id="caught" data-f="caught">'+esc(draft.caught)+'</textarea>'+
-      '<label class="q" for="next">Next time, I might explore\u2026</label><textarea id="next" data-f="next">'+esc(draft.next)+'</textarea></details>'+
+      '<label class="q" for="caught">Did anything I saw, heard, or read lately stand out to me? What does that say about me?</label><textarea id="caught" data-f="caught">'+esc(draft.caught)+'</textarea>'+
+      '<label class="q" for="next">Next time I might try…</label><textarea id="next" data-f="next">'+esc(draft.next)+'</textarea></details>'+
       '<label class="q" for="tell">Someone I could tell about today</label>'+
       '<input type="text" id="tell" data-f="tell" value="'+esc(draft.tell)+'" placeholder="Optional. A name is enough.">'+
-      '<p class="hint">Not for approval. So the practice lives in your real life, with real people.</p>'+
-      (draft.parked?'<p class="q">Parked for after</p><p class="body">'+esc(draft.parked)+'</p>':'');
+      '<p class="hint">Not to get approval. It’s just a way to share what you did with someone.</p>'+
+      (draft.parked?'<p class="q">Saved for after</p><p class="body">'+esc(draft.parked)+'</p>':'');
   }
   function delta(s){
     if(!s.before||!s.after)return null;var out=[];
@@ -338,9 +338,9 @@ details.opt{margin-top:22px}
     return '<h1>Saved</h1>'+
       (s&&s.learned?'<p class="anchor">'+esc(s.learned)+'</p>':'<p class="lede">The session is in your notes.</p>')+
       (d?'<p class="small">'+d+'</p>':'')+
-      (s&&s.parked?'<p class="q">You parked this</p><p class="body">'+esc(s.parked)+'</p><p class="hint">Now is a reasonable time, if you have it in you. If not, it keeps.</p>':'')+
-      (s&&s.tell?'<p class="q">You thought of telling</p><p class="body">'+esc(s.tell)+'</p>':'')+
-      '<div class="stack" style="margin-top:24px"><button class="btn wide" data-act="notes">Read what you\u2019ve learned</button><button class="btn ghost wide" data-act="home">Done</button></div>';
+      (s&&s.parked?'<p class="q">You saved this for later</p><p class="body">'+esc(s.parked)+'</p><p class="hint">You can do it now if you have the energy. If not, it can wait.</p>':'')+
+      (s&&s.tell?'<p class="q">You could tell</p><p class="body">'+esc(s.tell)+'</p>':'')+
+      '<div class="stack" style="margin-top:24px"><button class="btn wide" data-act="notes">Read your notes</button><button class="btn ghost wide" data-act="home">Done</button></div>';
   }
   function patterns(){
     var n=sessions.length;if(n<3)return "";
@@ -354,17 +354,17 @@ details.opt{margin-top:22px}
     var top=function(o){var k=Object.keys(o).sort(function(a,b){return o[b]-o[a]});return k.length?k[0]:null};
     var avg=function(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null};
     var out='<p>'+n+' sessions'+(cnt?', usually about '+Math.round(mins/cnt)+' minutes':'')+'.</p>';
-    var tm=top(mats);if(tm)out+='<p>You reach for '+esc(tm)+' most often.</p>';
+    var tm=top(mats);if(tm)out+='<p>You use '+esc(tm)+' most often.</p>';
     var s1=avg(ds),e1=avg(de);
-    if(ds.length>=3){out+='<p>After making you tend to feel '+(s1>0.3?'more settled':s1<-0.3?'less settled':'about as settled')+(e1!==null&&de.length>=3?' and '+(e1>0.3?'more alive':e1<-0.3?'flatter':'about the same in energy'):'')+'.</p>'}
+    if(ds.length>=3){out+='<p>After making you tend to feel '+(s1>0.3?'more settled':s1<-0.3?'less settled':'about as settled')+(e1!==null&&de.length>=3?' and '+(e1>0.3?'more energetic':e1<-0.3?'lower in energy':'about the same in energy'):'')+'.</p>'}
     var tt=top(tags);if(tt&&tags[tt]>=2)out+='<p>\u201c'+esc(tt)+'\u201d has come up '+tags[tt]+' times.</p>';
     return '<div class="summary">'+out+'</div>';
   }
   function notesView(){
-    var head='<h1>What you\u2019ve learned</h1><p class="lede">Your sessions, newest first. Read them together and patterns start to show.</p>';
-    if(!sessions.length)return head+'<p class="empty">Nothing here yet. Your first session will appear here once you save it.</p>'+'<div class="stack"><button class="btn ghost wide" data-act="home">Back</button></div>';
+    var head='<h1>Your notes</h1><p class="lede">Your sessions, newest first.</p>';
+    if(!sessions.length)return head+'<p class="empty">Nothing here yet. Your first saved session will show up here.</p>'+'<div class="stack"><button class="btn ghost wide" data-act="home">Back</button></div>';
     return head+patterns()+sessions.map(function(s){
-      var rows=[["Material",s.material],["Tried",s.experiment],["Held my attention",s.held],["Restless or lost time",s.restless],["Caught me",s.caught],["Next",s.next],["Curious about",lines(s.curiousText).join("; ")],["In common",s.common],["Set aside",(s.drains||[]).join(", ")],["Open loops",lines(s.loopsText).join("; ")],["Someone to tell",s.tell]].filter(function(r){return r[1]});
+      var rows=[["Material",s.material],["Tried",s.experiment],["Held my attention",s.held],["Restless or lost track of time",s.restless],["Stood out",s.caught],["Next",s.next],["Curious about",lines(s.curiousText).join("; ")],["In common",s.common],["Set aside",(s.drains||[]).join(", ")],["Open loops",lines(s.loopsText).join("; ")],["Someone to tell",s.tell]].filter(function(r){return r[1]});
       var mins=s.startedAt&&s.endedAt?Math.round((s.endedAt-s.startedAt)/60000)+' min of making':'';
       var d=delta(s);
       return '<article class="entry"><div class="d">'+fmtDate(s.createdAt)+(mins?'. '+mins:'')+(s.path==="short"?'. Quick session':'')+'</div>'+
@@ -372,21 +372,24 @@ details.opt{margin-top:22px}
         ((s.tags||[]).length?'<p class="tags">'+esc(s.tags.join(", "))+'</p>':'')+
         (d?'<p class="tags">'+d+'</p>':'')+
         (rows.length?'<details><summary>More from this session</summary><dl>'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'}).join("")+'</dl></details>':'')+
-        (confirmKey==="del:"+s.id?'<p class="small">Delete this session? This can\u2019t be undone.</p><button class="btn sm" data-delyes="'+esc(s.id)+'">Yes, delete</button> <button class="btn sm ghost" data-delno="1">Keep</button>':'<button class="linkbtn" data-del="'+esc(s.id)+'">Delete this session</button>')+'</article>';
+        (confirmKey==="del:"+s.id?'<p class="small">Delete this session? This can’t be undone.</p><button class="btn sm" data-delyes="'+esc(s.id)+'">Yes, delete</button> <button class="btn sm ghost" data-delno="1">Keep</button>':'<button class="linkbtn" data-del="'+esc(s.id)+'">Delete this session</button>')+'</article>';
     }).join("")+'<div class="stack" style="margin-top:24px"><button class="btn ghost wide" data-act="export">Download my notes</button><button class="btn ghost wide" data-act="home">Back</button></div>';
   }
   function aboutView(){
-    return '<div class="about"><h1>Why it\u2019s built this way</h1>'+
-      '<p class="lede">Each part leans on something well established about attention, mood, and habit. None of it is a rule.</p>'+
-      '<h2>Readings before and after</h2><p>Doing comes before feeling like doing. Two quick readings let you see, over time, what making does for you, which is more convincing than being told.</p>'+
-      '<h2>Refusing the pull and a minute of nothing</h2><p>Scrolling is often avoidance, and avoidance keeps whatever it avoids in place. A short, deliberate stretch of nothing lets boredom return, and ideas tend to follow boredom.</p>'+
-      '<h2>Emptying your head, capped</h2><p>Writing worries down helps only if it ends. Five minutes, then stop. Parking one task for after keeps the making window clear and still honors the task.</p>'+
-      '<h2>Curiosity before choosing</h2><p>Listing what pulls you, then noticing what the list shares, is a quiet way of learning about yourself. It also makes the next choice feel like yours.</p>'+
-      '<h2>Small material, small bite</h2><p>Clay, drawing, sculpture, and design all start with small, hands-on experiments. Twenty minutes is a real session. Growth comes from returning, not from length.</p>'+
-      '<h2>Phone away</h2><p>Willpower is unreliable. Distance is reliable.</p>'+
-      '<h2>Reflection by tapping</h2><p>Writing is optional so that reflection never becomes a chore. A tap that says \u201clost track of time\u201d is data about you.</p>'+
-      '<h2>Someone to tell</h2><p>Creative attention lasts longer inside real connection. Telling one person is not showing the work. It is letting the practice exist in your life.</p>'+
-      '<h2>What this tool refuses to do</h2><p>No streaks, reminders, scores, or missed-day counts. Guilt is a poor reason to make things.</p>'+
+    var items=[
+      ["Check-ins before and after","Starting an activity often comes before feeling motivated. Two quick check-ins let you see over time how making affects you."],
+      ["Putting distractions away, and one minute of nothing","Scrolling is often a way to avoid something, which keeps it around. A short stretch of doing nothing lets you get bored, and ideas often come after boredom."],
+      ["Writing down what’s on your mind, with a time limit","Writing worries down helps only if it has an end. Stop after five minutes. Saving one task for later keeps your making time free without ignoring the task."],
+      ["Listing what you’re curious about","Listing what interests you, then looking for what the items share, shows you something about yourself. It also makes the next choice feel like yours."],
+      ["Small materials, short sessions","Clay, drawing, sculpture, and design all start with small experiments you do with your hands. Twenty minutes is a real session. Coming back matters more than how long you work."],
+      ["Phone away","Willpower is unreliable. Putting the phone in another room works better."],
+      ["Reflecting by tapping","Writing is optional so that reflecting doesn’t become a chore. Tapping “lost track of time” still tells you something about yourself."],
+      ["Someone to tell","You’re more likely to keep a habit if someone else knows about it. Telling one person isn’t showing your work. It just keeps this part of your life from being secret."],
+      ["What this tool leaves out","No streaks, reminders, scores, or missed-day counts. Guilt isn’t a good reason to make things."]
+    ];
+    return '<div class="about"><h1>Why it works this way</h1>'+
+      '<p class="lede">Each part is based on common findings about attention, mood, and habits. None of it is a rule.</p>'+
+      items.map(function(i){return '<h2>'+i[0]+'</h2><p>'+i[1]+'</p>'}).join("")+
       '<div class="stack" style="margin-top:28px"><button class="btn ghost wide" data-act="home">Back</button></div></div>';
   }
 
@@ -404,7 +407,7 @@ details.opt{margin-top:22px}
       if(step<5)navHtml=back+'<button class="btn" data-act="next">Continue</button>';
       else if(step===5){
         if(!draft.startedAt)navHtml=back+'<button class="btn" data-act="start">Start '+draft.minutes+' minutes</button>';
-        else navHtml='<button class="btn" data-act="return">I\u2019m back</button>';
+        else navHtml='<button class="btn" data-act="return">I’m back</button>';
       }
       else navHtml=back+'<button class="btn" data-act="save">Save session</button>';
     }
