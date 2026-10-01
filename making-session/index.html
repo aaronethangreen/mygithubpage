@@ -88,6 +88,17 @@ details.opt{margin-top:22px}
 .summary{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 20px;background:var(--surface)}
 .summary p{margin:0 0 6px}
 .summary p:last-child{margin:0}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0 4px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.stat b{display:block;font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.1}
+.stat span{font-size:13px;color:var(--muted)}
+.summary h3{font-family:var(--serif);font-weight:400;font-size:18px;margin:20px 0 6px}
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:minmax(0,9.5rem) 1fr 2.2ch;gap:10px;align-items:center;font-size:14px}
+.bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.bf{display:block;height:100%;background:var(--house);border-radius:5px}
+.bn{text-align:right;color:var(--muted)}
 .foot{font-size:13px;color:var(--muted);margin-top:36px}
 .about h2{font-size:21px;margin-top:24px}
 .about p{margin:0 0 10px}
@@ -342,22 +353,81 @@ details.opt{margin-top:22px}
       (s&&s.tell?'<p class="q">You could tell</p><p class="body">'+esc(s.tell)+'</p>':'')+
       '<div class="stack" style="margin-top:24px"><button class="btn wide" data-act="notes">Read your notes</button><button class="btn ghost wide" data-act="home">Done</button></div>';
   }
-  function patterns(){
-    var n=sessions.length;if(n<3)return "";
-    var mats={},tags={},ds=[],de=[],mins=0,cnt=0;
-    sessions.forEach(function(s){
-      if(s.material)mats[s.material]=(mats[s.material]||0)+1;
-      (s.tags||[]).forEach(function(t){tags[t]=(tags[t]||0)+1});
-      if(s.before&&s.after){if(s.before.settled&&s.after.settled)ds.push(s.after.settled-s.before.settled);if(s.before.energy&&s.after.energy)de.push(s.after.energy-s.before.energy)}
-      if(s.startedAt&&s.endedAt){mins+=Math.round((s.endedAt-s.startedAt)/60000);cnt++}
+  function countBy(list){var o={};list.forEach(function(x){if(x)o[x]=(o[x]||0)+1});return o}
+  function sortedKeys(o){return Object.keys(o).sort(function(a,b){return o[b]-o[a]||(a<b?-1:1)})}
+  function avg(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null}
+  function r1(n){return (Math.round(n*10)/10).toString()}
+  function bars(o,limit){
+    var keys=sortedKeys(o).slice(0,limit||6),max=keys.length?o[keys[0]]:1;
+    return '<div class="bars">'+keys.map(function(k){return '<div class="bar"><span class="bl">'+esc(k)+'</span><span class="bt"><span class="bf" style="width:'+Math.max(4,Math.round(o[k]/max*100))+'%"></span></span><span class="bn">'+o[k]+'</span></div>'}).join("")+'</div>';
+  }
+  function weekBars(){
+    var now=Date.now(),wk=7*86400000,counts=[0,0,0,0,0,0];
+    sessions.forEach(function(s){var w=Math.floor((now-s.createdAt)/wk);if(w>=0&&w<6)counts[w]++});
+    var max=Math.max.apply(null,counts.concat([1]));
+    var labels=["This week","1 week ago","2 weeks ago","3 weeks ago","4 weeks ago","5 weeks ago"];
+    return '<div class="bars">'+counts.map(function(c,i){return '<div class="bar"><span class="bl">'+labels[i]+'</span><span class="bt"><span class="bf" style="width:'+(c?Math.max(4,Math.round(c/max*100)):0)+'%"></span></span><span class="bn">'+c+'</span></div>'}).join("")+'</div>';
+  }
+  function checkinChart(name){
+    var pts=sessions.filter(function(s){return s.before&&s.after&&s.before[name]&&s.after[name]}).slice(0,12).reverse();
+    if(pts.length<2)return "";
+    var W=300,H=84,pad=14,step=pts.length>1?(W-pad*2)/(pts.length-1):0;
+    function y(v){return H-pad-(v-1)*(H-pad*2)/4}
+    var g="";
+    pts.forEach(function(s,i){
+      var x=pad+i*step,b=s.before[name],a=s.after[name];
+      g+='<line x1="'+x+'" y1="'+y(b)+'" x2="'+x+'" y2="'+y(a)+'" stroke="var(--line)" stroke-width="3" stroke-linecap="round"/>'+
+         '<circle cx="'+x+'" cy="'+y(b)+'" r="3.5" fill="var(--muted)"/>'+
+         '<circle cx="'+x+'" cy="'+y(a)+'" r="4.5" fill="var(--house)"/>';
     });
-    var top=function(o){var k=Object.keys(o).sort(function(a,b){return o[b]-o[a]});return k.length?k[0]:null};
-    var avg=function(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null};
-    var out='<p>'+n+' sessions'+(cnt?', usually about '+Math.round(mins/cnt)+' minutes':'')+'.</p>';
-    var tm=top(mats);if(tm)out+='<p>You use '+esc(tm)+' most often.</p>';
-    var s1=avg(ds),e1=avg(de);
-    if(ds.length>=3){out+='<p>After making you tend to feel '+(s1>0.3?'more settled':s1<-0.3?'less settled':'about as settled')+(e1!==null&&de.length>=3?' and '+(e1>0.3?'more energetic':e1<-0.3?'lower in energy':'about the same in energy'):'')+'.</p>'}
-    var tt=top(tags);if(tt&&tags[tt]>=2)out+='<p>\u201c'+esc(tt)+'\u201d has come up '+tags[tt]+' times.</p>';
+    return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Before and after ratings for '+name+', by session, oldest on the left">'+g+'</svg>';
+  }
+  function patterns(){
+    var n=sessions.length;
+    var out='<h2 style="margin-top:8px">Statistics and trends</h2>';
+    if(n<3)return '<div class="summary">'+out+'<p>'+n+(n===1?' session':' sessions')+' saved. Trends show up after 3 sessions.</p></div>';
+    var timed=sessions.filter(function(s){return s.startedAt&&s.endedAt}).map(function(s){return Math.round((s.endedAt-s.startedAt)/60000)});
+    var total=timed.reduce(function(a,b){return a+b},0);
+    var quick=sessions.filter(function(s){return s.path==="short"}).length;
+    var recent=sessions.filter(function(s){return Date.now()-s.createdAt<28*86400000}).length;
+    out+='<div class="stats">'+
+      '<div class="stat"><b>'+n+'</b><span>sessions</span></div>'+
+      '<div class="stat"><b>'+recent+'</b><span>in the last 4 weeks</span></div>'+
+      (timed.length?'<div class="stat"><b>'+Math.round(total/timed.length)+'</b><span>minutes, average</span></div>':'')+
+      (timed.length?'<div class="stat"><b>'+(total>=120?r1(total/60):total)+'</b><span>'+(total>=120?'hours':'minutes')+' making, total</span></div>':'')+
+      '</div>';
+    out+='<h3>Sessions per week</h3>'+weekBars();
+    var mats=countBy(sessions.map(function(s){return s.material}));
+    if(Object.keys(mats).length)out+='<h3>Materials</h3>'+bars(mats);
+    if(timed.length>=3){
+      var lens=countBy(timed.map(function(m){return m<=20?"20 minutes or less":m<=45?"21 to 45 minutes":m<=60?"46 to 60 minutes":"Over 60 minutes"}));
+      out+='<h3>Session length</h3>'+bars(lens);
+    }
+    // check-ins
+    var rows=[];
+    [["settled","Settled"],["energy","Energy"]].forEach(function(p){
+      var bs=[],as=[];
+      sessions.forEach(function(s){if(s.before&&s.after&&s.before[p[0]]&&s.after[p[0]]){bs.push(s.before[p[0]]);as.push(s.after[p[0]])}});
+      if(bs.length>=3){
+        var b=avg(bs),a=avg(as),d=a-b;
+        var recentD=null;
+        if(bs.length>=6){var k=Math.min(3,Math.floor(bs.length/2));var list=sessions.filter(function(s){return s.before&&s.after&&s.before[p[0]]&&s.after[p[0]]});var dr=list.slice(0,k).map(function(s){return s.after[p[0]]-s.before[p[0]]});var dold=list.slice(-k).map(function(s){return s.after[p[0]]-s.before[p[0]]});recentD=avg(dr)-avg(dold)}
+        rows.push('<h3>'+p[1]+', before and after</h3><p>Average before: '+r1(b)+'. Average after: '+r1(a)+' ('+(d>0?'+':'')+r1(d)+'), across '+bs.length+' sessions.</p>'+
+          (recentD!==null?'<p class="small">Your last '+Math.min(3,Math.floor(bs.length/2))+' sessions changed '+p[1].toLowerCase()+' by '+(recentD>0.3?'more':recentD<-0.3?'less':'about the same amount')+' than your first '+Math.min(3,Math.floor(bs.length/2))+'.</p>':'')+
+          checkinChart(p[0])+'<p class="hint">Each line runs from the before rating (gray dot) to the after rating (blue dot). Oldest session is on the left.</p>');
+      }
+    });
+    if(rows.length)out+=rows.join("");
+    else out+='<h3>Check-ins</h3><p class="small">Fill in the before and after check-ins in at least 3 sessions to see how making changes how you feel.</p>';
+    var tags=countBy([].concat.apply([],sessions.map(function(s){return s.tags||[]})));
+    if(Object.keys(tags).length)out+='<h3>What you noticed</h3>'+bars(tags,6);
+    var drains=countBy([].concat.apply([],sessions.map(function(s){return s.drains||[]})));
+    if(Object.keys(drains).length)out+='<h3>What you set aside</h3>'+bars(drains,6);
+    var cur=countBy([].concat.apply([],sessions.map(function(s){return lines(s.curiousText).map(function(x){return x.toLowerCase()})})));
+    var rep={};Object.keys(cur).forEach(function(k){if(cur[k]>=2)rep[k]=cur[k]});
+    if(Object.keys(rep).length)out+='<h3>Interests that came up more than once</h3>'+bars(rep,6);
+    var told=sessions.filter(function(s){return s.tell}).length;
+    out+='<h3>Other</h3><p>You named someone to tell in '+told+' of '+n+' sessions.'+(quick?' '+quick+' of the sessions were quick sessions.':'')+'</p>';
     return '<div class="summary">'+out+'</div>';
   }
   function notesView(){
