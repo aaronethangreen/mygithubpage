@@ -159,10 +159,10 @@ details.opt{margin-top:22px}
 
   var DRAINS=["Phone","Social feeds","Email","News","Messages","Podcasts"];
   var MATS={
-    "Clay":["Pinch a small form with your eyes closed","Make ten little forms in ten minutes, no keeping","Press textures from around the house into a slab","Roll coils and see what shape they end up in"],
-    "Drawing":["Draw the same object five times, faster each time","Draw only the shadows in the room","Blind contour of your own hand","Fill a page with one kind of mark"],
+    "Clay":["Pinch a small form with your eyes closed","Make ten small forms in ten minutes. Don’t keep any","Press textures from around the house into a slab","Roll coils and see what shape they end up in"],
+    "Drawing":["Draw the same object five times, faster each time","Draw only the shadows in the room","Draw your hand without looking at the paper","Fill a page with one kind of mark"],
     "Design":["Redesign one everyday object you use daily, sketch only","Make a poster using only type and one color","Arrange cut paper scraps on a page and keep the arrangement you like best","Sketch three ways to organize one shelf or drawer"],
-    "Sculpture":["Build something that balances, from what’s in a drawer","Bend a line drawing out of wire","Stack three objects in different ways and keep the one you like best","Carve into a bar of soap or a block of foam"]
+    "Sculpture":["Build something that balances, from what’s in a drawer","Bend a wire into a line drawing","Stack three objects in different ways and keep the one you like best","Carve into a bar of soap or a block of foam"]
   };
   var TAGS=["Lost track of time","Got restless","Wanted to stop early","Kept going past the time","Surprised myself","Kept going back to one thing","Felt clumsy","Felt calm","Judged the work","Forgot about the phone"];
   var FULL=[1,2,3,4,5,6], SHORT=[4,5,6];
@@ -265,13 +265,13 @@ details.opt{margin-top:22px}
   }
   function loopsList(){
     var ls=lines(draft.loopsText);
-    if(!ls.length)return '<p class="hint">Your list will appear here. Tap the ones bothering you most.</p>';
+    if(!ls.length)return '<p class="hint">Your list will appear here. Tap the items bothering you most.</p>';
     var starred=draft.starred.filter(function(x){return ls.indexOf(x)>-1});
     var park=starred.length?'<p class="q">Save one task for after</p><div class="chips">'+starred.map(function(s){return '<button class="chip" data-park="'+esc(s)+'" aria-pressed="'+(draft.parked===s)+'">'+esc(s)+'</button>'}).join("")+'</div><p class="hint">That task will show up again when you finish. The rest can wait.</p>':'';
     return '<ul class="loops">'+ls.map(function(l){var on=draft.starred.indexOf(l)>-1;return '<li><button data-star="'+esc(l)+'" aria-pressed="'+on+'"><span class="star" aria-hidden="true">'+(on?'\u2605':'\u2606')+'</span><span class="lt">'+esc(l)+'</span></button></li>'}).join("")+'</ul>'+park;
   }
   function step2(){
-    return stepHead("Write down what’s on your mind","List worries, unfinished tasks, and anything else on your mind, one per line. Spend five minutes at most. You’re just getting them out of your head, not solving them.")+
+    return stepHead("Write down what’s on your mind","List worries, unfinished tasks, and anything else on your mind, one per line. Spend five minutes at most. You only need to write the items down. You don’t need to fix anything.")+
       countdown("declutter",300,"Start five minutes","Time’s up. Stop here, even if you’re not finished.")+
       '<textarea id="loops" data-f="loopsText" class="big" placeholder="Call back about the gutters\nReturn the library books…">'+esc(draft.loopsText)+'</textarea>'+
       '<div id="loopsList">'+loopsList()+'</div>'+
@@ -285,7 +285,7 @@ details.opt{margin-top:22px}
     return '<p class="q">From earlier sessions</p><div class="chips">'+list.map(function(c){return '<button class="chip" data-addcur="'+esc(c)+'">+ '+esc(c)+'</button>'}).join("")+'</div>';
   }
   function step3(){
-    return stepHead("What are you curious about?","List things you want to look at, touch, build, or try. Don’t sort them or explain them.")+
+    return stepHead("What are you curious about?","List things you want to look at, touch, build, or try. Don’t sort or explain the items.")+
       '<textarea id="curious" data-f="curiousText" placeholder="One per line">'+esc(draft.curiousText)+'</textarea>'+
       '<div id="pastCur">'+pastCurious()+'</div>'+
       '<label class="q" for="common">Read your list. What do these things have in common?</label>'+
@@ -350,7 +350,7 @@ details.opt{margin-top:22px}
       (s&&s.learned?'<p class="anchor">'+esc(s.learned)+'</p>':'<p class="lede">The session is in your notes.</p>')+
       (d?'<p class="small">'+d+'</p>':'')+
       (s&&s.parked?'<p class="q">You saved this task for later</p><p class="body">'+esc(s.parked)+'</p><p class="hint">You can do the task now if you have the energy. If not, the task can wait.</p>':'')+
-      (s&&s.tell?'<p class="q">You could tell</p><p class="body">'+esc(s.tell)+'</p>':'')+
+      (s&&s.tell?'<p class="q">You named someone to tell</p><p class="body">'+esc(s.tell)+'</p>':'')+
       '<div class="stack" style="margin-top:24px"><button class="btn wide" data-act="notes">Read your notes</button><button class="btn ghost wide" data-act="home">Done</button></div>';
   }
   function countBy(list){var o={};list.forEach(function(x){if(x)o[x]=(o[x]||0)+1});return o}
@@ -393,8 +393,8 @@ details.opt{margin-top:22px}
     out+='<div class="stats">'+
       '<div class="stat"><b>'+n+'</b><span>sessions</span></div>'+
       '<div class="stat"><b>'+recent+'</b><span>in the last 4 weeks</span></div>'+
-      (timed.length?'<div class="stat"><b>'+Math.round(total/timed.length)+'</b><span>minutes, average</span></div>':'')+
-      (timed.length?'<div class="stat"><b>'+(total>=120?r1(total/60):total)+'</b><span>'+(total>=120?'hours':'minutes')+' making, total</span></div>':'')+
+      (timed.length?'<div class="stat"><b>'+Math.round(total/timed.length)+'</b><span>average minutes per session</span></div>':'')+
+      (timed.length?'<div class="stat"><b>'+(total>=120?r1(total/60):total)+'</b><span>total '+(total>=120?'hours':'minutes')+' making</span></div>':'')+
       '</div>';
     out+='<h3>Sessions per week</h3>'+weekBars();
     var mats=countBy(sessions.map(function(s){return s.material}));
