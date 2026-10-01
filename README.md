@@ -18,8 +18,10 @@ Your notes show past sessions plus statistics and trends. Nothing is scored, and
 
 ## Schedule and check-ins
 
-The "Plan and calendar" screen lets you pick days, a time, and a length, and commit to the plan. A link adds the plan to Google Calendar as a weekly event. The "Weekly check-in" screen compares planned and finished sessions and records what got in the way and what to change. The plan is also saved to the artifact database (`shared/plan`) so Claude can read it when it sets up calendar events and check-ins.
+The tool has two tabs. "Make" is for sessions. "Schedule" is for planning.
 
-Sessions are saved in the browser. The notes screen has a button to download them as a JSON file.
+- **Plan sessions:** pick days, a time, and a length for one week (this week or next week), then commit to the plan. Plans do not repeat. Each week gets its own plan.
+- **Add to calendar:** after you commit, each session has a link that adds one event to Google Calendar.
+- **Weekly check-in:** compares planned and finished sessions for the week, records what got in the way and what to change, and leads into planning next week. Sunday morning works well.
 
-Writing rules for this repo are in `CLAUDE.md`.
+The plan for this week and next week is saved to the artifact database (`shared/plan`) so a Claude check-in can read it.

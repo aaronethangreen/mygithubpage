@@ -99,6 +99,8 @@ details.opt{margin-top:22px}
 .bt{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
 .bf{display:block;height:100%;background:var(--house);border-radius:5px}
 .bn{text-align:right;color:var(--muted)}
+body.sched{background:var(--surface)}
+.tabs{margin:14px 0 18px}
 .foot{font-size:13px;color:var(--muted);margin-top:36px}
 .about h2{font-size:21px;margin-top:24px}
 .about p{margin:0 0 10px}
@@ -146,7 +148,7 @@ details.opt{margin-top:22px}
 <script>
 (function(){
   "use strict";
-  var LS_DRAFT="ms2.draft", LS_SESS="ms2.sessions", LS_PLAN="ms2.plan", LS_CHK="ms2.checkins";
+  var LS_DRAFT="ms2.draft", LS_SESS="ms2.sessions", LS_PLAN="ms2.plan", LS_PLANS="ms2.plans", LS_CHK="ms2.checkins";
   function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
   function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
   function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
@@ -170,7 +172,7 @@ details.opt{margin-top:22px}
   var confirmKey=null, view="home", step=1, timerId=null, countId=null;
   var draft=lsGet(LS_DRAFT,null);
   var sessions=lsGet(LS_SESS,[]);
-  var plan=lsGet(LS_PLAN,null), checkins=lsGet(LS_CHK,[]), pd=null, rv=null;
+  var plans=lsGet(LS_PLANS,[]), checkins=lsGet(LS_CHK,[]), pd=null, rv=null;
   var db=null, userId=null;
 
   function newDraft(path){return{id:uid(),createdAt:Date.now(),path:path||"full",before:{},after:{},drains:[],avoiding:"",loopsText:"",starred:[],parked:"",curiousText:"",common:"",material:"",experiment:"",minutes:45,ready:false,startedAt:null,endedAt:null,learned:"",tags:[],held:"",restless:"",caught:"",next:"",tell:"",view:"checkin",step:1}}
@@ -197,7 +199,7 @@ details.opt{margin-top:22px}
         return db.collection("data/users/"+userId).limit(1000).get().then(function(snap){
           var byId={};sessions.forEach(function(s){byId[s.id]=s});
           snap.docs.forEach(function(doc){if(!doc.exists)return;
-            if(doc.id==="_plan"){var rp=doc.data();if(!plan||(rp.updatedAt||0)>(plan.updatedAt||0)){plan=rp;lsSet(LS_PLAN,plan)}return}
+            if(doc.id.indexOf("_plan")===0){var rp=doc.data();if(rp&&rp.days){if(!rp.forWeek)rp.forWeek=weekStart(rp.updatedAt||Date.now());var ex=planFor(rp.forWeek);if(!ex||(rp.updatedAt||0)>(ex.updatedAt||0)){plans=plans.filter(function(q){return q.forWeek!==rp.forWeek});plans.push(rp);plans.sort(function(x,y){return y.forWeek-x.forWeek});lsSet(LS_PLANS,plans)}}return}
             if(doc.id.indexOf("_chk_")===0){var rc=doc.data();if(!checkins.some(function(c){return c.id===rc.id})){checkins.push(rc);checkins.sort(function(a,b){return b.createdAt-a.createdAt});lsSet(LS_CHK,checkins)}return}
             var x=Object.assign({},doc.data());x.synced=true;byId[doc.id]=x});
           sessions=Object.keys(byId).map(function(k){return byId[k]});
@@ -219,7 +221,10 @@ details.opt{margin-top:22px}
       if(step===6){dim=.35;beam=.75;mats=1}
     }
     if(view==="done"){dim=.2;beam=.6;mats=1;phone=0}
-    if(view==="notes"||view==="about"||view==="plan"||view==="review"){dim=.15;beam=.5;mats=.8;phone=0}
+    if(view==="notes"||view==="about"||view==="plan"||view==="review"||view==="schedule"){dim=.15;beam=.5;mats=.8;phone=0}
+    var sch=view==="schedule"||view==="plan"||view==="review";
+    document.querySelector(".stage").style.display=sch?"none":"";
+    document.body.classList.toggle("sched",sch);
     document.getElementById("dimmer").setAttribute("opacity",dim);
     document.getElementById("beam").setAttribute("opacity",beam);
     document.getElementById("materials").setAttribute("opacity",mats);
@@ -239,93 +244,114 @@ details.opt{margin-top:22px}
 
   /* ---------- plan and calendar ---------- */
   var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-  var DAY_ORDER=[1,2,3,4,5,6,0], ICAL=["SU","MO","TU","WE","TH","FR","SA"];
+  var DAY_ORDER=[1,2,3,4,5,6,0];
   var BLOCKERS=["Too tired","Too busy","Forgot","Didn’t feel like it","Something came up","Nothing got in the way"];
   var CHANGES=["Keep the plan","Shorter sessions","Different time","Fewer days","More days"];
-  function clock(t){var a=(t||"19:00").split(":"),d=new Date();d.setHours(+a[0],+a[1],0,0);return d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
-  function listJoin(a){return a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.length-1]}
-  function planSentence(p){
-    var names=DAY_ORDER.filter(function(d){return p.days.indexOf(d)>-1}).map(function(d){return DAYS[d]});
-    return names.length?listJoin(names)+" at "+clock(p.time)+" for "+p.minutes+" minutes":"";
-  }
   function weekStart(ts){var d=new Date(ts);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime()}
-  function sessionsSince(ts){return sessions.filter(function(x){return (x.startedAt||x.createdAt)>=ts}).length}
-  function nextSlot(p){
-    if(!p||!p.days||!p.days.length)return null;
-    var hm=(p.time||"19:00").split(":"),now=new Date();
-    for(var i=0;i<8;i++){
-      var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+i,+hm[0],+hm[1],0,0);
-      if(p.days.indexOf(d.getDay())>-1&&d.getTime()>now.getTime())return d;
-    }
-    return null;
+  function wkAdd(ts,n){var d=new Date(ts);d.setDate(d.getDate()+7*n);return d.getTime()}
+  function thisWk(){return weekStart(Date.now())}
+  function planFor(wk){for(var i=0;i<plans.length;i++)if(plans[i].forWeek===wk)return plans[i];return null}
+  function mdShort(d){return d.toLocaleDateString([],{month:"short",day:"numeric"})}
+  function fmtWeek(wk){var a=new Date(wk),b=new Date(wk);b.setDate(b.getDate()+6);return a.getMonth()===b.getMonth()?mdShort(a)+"–"+b.getDate():mdShort(a)+"–"+mdShort(b)}
+  function listJoin(a){return a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.length-1]}
+  function clock(t){var a=(t||"19:00").split(":"),d=new Date();d.setHours(+a[0],+a[1],0,0);return d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
+  function slotDate(p,day){var a=(p.time||"19:00").split(":"),d=new Date(p.forWeek);d.setDate(d.getDate()+((day+6)%7));d.setHours(+a[0],+a[1],0,0);return d}
+  function planSlots(p){return DAY_ORDER.filter(function(d){return p.days.indexOf(d)>-1}).map(function(d){return slotDate(p,d)})}
+  function dayLabel(d){return DAYS[d.getDay()]+", "+mdShort(d)}
+  function fmtSlot(d){return dayLabel(d)+" at "+d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
+  function planSentence(p){var sl=planSlots(p);return sl.length?listJoin(sl.map(dayLabel))+" at "+clock(p.time)+" for "+p.minutes+" minutes":""}
+  function doneIn(p){var a=p.forWeek,b=wkAdd(a,1);return sessions.filter(function(x){var t=x.startedAt||x.createdAt;return t>=a&&t<b}).length}
+  function nextSlot(){
+    var now=Date.now(),best=null;
+    [thisWk(),wkAdd(thisWk(),1)].forEach(function(wk){var p=planFor(wk);if(p)planSlots(p).forEach(function(d){if(d.getTime()>now&&(!best||d<best))best=d})});
+    return best;
   }
-  function fmtSlot(d){return DAYS[d.getDay()]+", "+d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}
   function pad2(n){return String(n).padStart(2,"0")}
   function icalLocal(d){return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate())+"T"+pad2(d.getHours())+pad2(d.getMinutes())+"00"}
-  function calendarLink(p){
-    var st=nextSlot(p);if(!st)return "";
+  function calendarLink(p,st){
     var en=new Date(st.getTime()+p.minutes*60000);
-    var days=DAY_ORDER.filter(function(d){return p.days.indexOf(d)>-1}).map(function(d){return ICAL[d]}).join(",");
     return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Making session")+
-      "&dates="+icalLocal(st)+"/"+icalLocal(en)+"&recur="+encodeURIComponent("RRULE:FREQ=WEEKLY;BYDAY="+days)+
+      "&dates="+icalLocal(st)+"/"+icalLocal(en)+
       "&details="+encodeURIComponent("Put your phone in another room and make something for "+p.minutes+" minutes.");
   }
-  function lastCheckin(){return checkins.length?checkins[0].createdAt:null}
+  function lastCheckin(){return checkins.length?checkins[0].createdAt:0}
   function reviewDue(){
-    if(!plan||!plan.committed)return false;
-    var last=lastCheckin()||plan.updatedAt||0;
-    return Date.now()-last>=7*86400000;
+    if(!plans.length)return false;
+    var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay());
+    var lastSunday=d.getTime();
+    var earliest=Math.min.apply(null,plans.map(function(q){return q.updatedAt||0}));
+    return lastCheckin()<lastSunday&&earliest<lastSunday;
   }
-  function pushPlan(){
-    if(!db||!userId||!plan)return;
-    var shared={days:plan.days,time:plan.time,minutes:plan.minutes,committed:!!plan.committed,updatedAt:plan.updatedAt,
-      weekStart:weekStart(Date.now()),doneThisWeek:sessionsSince(weekStart(Date.now()))};
-    sessRef("_plan").set(plan).catch(function(){});
-    try{db.doc("shared/plan").set(shared).catch(function(){})}catch(e){}
+  function sharedDoc(){
+    function slim(p){return p?{forWeek:p.forWeek,days:p.days,time:p.time,minutes:p.minutes,committed:!!p.committed,updatedAt:p.updatedAt}:null}
+    var c=planFor(thisWk());
+    return {weekStart:thisWk(),current:slim(c),next:slim(planFor(wkAdd(thisWk(),1))),doneThisWeek:c?doneIn(c):0,updatedAt:Date.now()};
   }
+  function pushShared(){if(!db||!userId)return;try{db.doc("shared/plan").set(sharedDoc()).catch(function(){})}catch(e){}}
+  function pushPlan(p){if(!db||!userId||!p)return;sessRef("_plan_"+p.forWeek).set(p).catch(function(){});pushShared()}
   function pushCheckin(c){if(db&&userId)sessRef("_chk_"+c.id).set(c).catch(function(){})}
-  function newPd(){
-    return plan?{days:plan.days.slice(),time:plan.time,minutes:plan.minutes,committed:!!plan.committed}
-      :{days:[],time:"19:00",minutes:45,committed:false};
+  function defaultWeek(){var d=new Date().getDay();return (d===0||d>=5)?wkAdd(thisWk(),1):thisWk()}
+  function newPd(wk){
+    var ex=planFor(wk);if(ex)return {forWeek:wk,days:ex.days.slice(),time:ex.time,minutes:ex.minutes,committed:!!ex.committed};
+    var last=plans.length?plans.slice().sort(function(a,b){return b.forWeek-a.forWeek})[0]:null;
+    return {forWeek:wk,days:[],time:last?last.time:"19:00",minutes:last?last.minutes:45,committed:false};
   }
-  function planCard(){
-    if(!plan||!plan.days.length)
-      return '<div class="summary"><h2 style="margin-top:0">Your schedule</h2><p>No schedule yet. Pick days and a time, and add them to your calendar.</p><button class="btn wide" data-act="plan">Set a schedule</button></div>';
-    var ns=nextSlot(plan),wk=weekStart(Date.now()),done=sessionsSince(wk);
-    return '<div class="summary"><h2 style="margin-top:0">Your schedule</h2>'+
-      '<p>'+esc(planSentence(plan))+'.</p>'+
-      (ns?'<p>Next session: '+esc(fmtSlot(ns))+'.</p>':'')+
-      '<p>This week: '+done+' of '+plan.days.length+' planned sessions done.</p>'+
-      '<div class="stack"><button class="btn ghost wide" data-act="plan">Plan and calendar</button>'+
-      '<button class="btn'+(reviewDue()?'':' ghost')+' wide" data-act="review">Weekly check-in'+(reviewDue()?' (due)':'')+'</button></div></div>';
+  function tabs(active){
+    return '<div class="seg tabs" role="tablist"><button role="tab" data-act="home" aria-pressed="'+(active==="make")+'">Make</button><button role="tab" data-act="schedule" aria-pressed="'+(active==="schedule")+'">Schedule</button></div>';
+  }
+  function weekBlock(label,wk){
+    var p=planFor(wk);
+    if(!p)return '<h3>'+label+' ('+fmtWeek(wk)+')</h3><p class="small">No sessions planned.</p>';
+    var done=wk<=thisWk()?'<p>Done so far: '+doneIn(p)+' of '+p.days.length+'.</p>':'';
+    return '<h3>'+label+' ('+fmtWeek(wk)+')</h3><p>'+esc(planSentence(p))+'.</p>'+done+'<p class="small">'+(p.committed?'You committed to this plan.':'You have not committed to this plan yet.')+'</p>';
+  }
+  function scheduleView(){
+    var ns=nextSlot(),last=checkins.length?checkins[0].createdAt:null,due=reviewDue();
+    return tabs("schedule")+'<h1>Schedule</h1>'+
+      '<p class="lede">Pick the sessions you will do each week and commit to them.</p>'+
+      (ns?'<p class="anchor">Next session: '+esc(fmtSlot(ns))+'</p>':'')+
+      '<div class="summary">'+weekBlock("This week",thisWk())+weekBlock("Next week",wkAdd(thisWk(),1))+'</div>'+
+      '<div class="stack"><button class="btn wide" data-act="plan">Plan sessions</button>'+
+      '<button class="btn'+(due?'':' ghost')+' wide" data-act="review">Weekly check-in'+(due?' (due)':'')+'</button></div>'+
+      '<p class="hint" style="margin-top:14px">'+(last?'Last check-in: '+fmtDate(last)+'.':'No check-ins yet.')+' A check-in on Sunday morning works well: review the week, then plan the next one.</p>';
   }
   function planView(){
-    var v=pd||newPd(),sent=v.days.length?planSentence(v):"";
-    var saved=plan&&plan.days.length&&JSON.stringify([plan.days.slice().sort(),plan.time,plan.minutes])===JSON.stringify([v.days.slice().sort(),v.time,v.minutes]);
-    return '<h1>Plan and calendar</h1>'+
-      '<p class="lede">Choose when you will make. A plan with days and times is easier to follow than a plan to find time.</p>'+
-      '<p class="q">Which days?</p><div class="chips" role="group" aria-label="Days">'+DAY_ORDER.map(function(d){return '<button class="chip" data-pday="'+d+'" aria-pressed="'+(v.days.indexOf(d)>-1)+'">'+DAYS[d].slice(0,3)+'</button>'}).join("")+'</div>'+
+    var v=pd,wk=v.forWeek,cur=thisWk(),isThis=wk===cur;
+    var now=Date.now(),sent=v.days.length?planSentence({forWeek:wk,days:v.days,time:v.time,minutes:v.minutes}):"";
+    var ex=planFor(wk);
+    var saved=ex&&JSON.stringify([ex.days.slice().sort(),ex.time,ex.minutes,!!ex.committed])===JSON.stringify([v.days.slice().sort(),v.time,v.minutes,!!v.committed]);
+    var links="";
+    if(saved&&ex.committed){
+      var fut=planSlots(ex).filter(function(d){return d.getTime()>now});
+      links=fut.length?'<h2>Calendar</h2><p>Each link adds one session to Google Calendar. Nothing repeats.</p><div class="stack">'+fut.map(function(d){return '<a class="btn ghost" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box" href="'+esc(calendarLink(ex,d))+'" target="_blank" rel="noopener">Add '+esc(fmtSlot(d))+'</a>'}).join("")+'</div>':'';
+    }
+    return '<h1>Plan sessions</h1>'+
+      '<p class="lede">Choose the days, time, and length for one week. Then commit to the plan.</p>'+
+      '<div class="seg" role="group" aria-label="Week"><button data-pweek="0" aria-pressed="'+isThis+'">This week</button><button data-pweek="1" aria-pressed="'+(!isThis)+'">Next week</button></div>'+
+      '<p class="hint">'+fmtWeek(wk)+'</p>'+
+      '<p class="q">Which days?</p><div class="chips" role="group" aria-label="Days">'+DAY_ORDER.map(function(d){
+        var dt=slotDate({forWeek:wk,time:"23:59"},d),past=dt.getTime()<now;
+        return '<button class="chip" data-pday="'+d+'" aria-pressed="'+(v.days.indexOf(d)>-1)+'"'+(past?' disabled':'')+'>'+DAYS[d].slice(0,3)+' '+dt.getDate()+'</button>'}).join("")+'</div>'+
       '<label class="q" for="ptime">What time?</label><input type="time" id="ptime" data-pf="time" value="'+esc(v.time)+'" style="max-width:12rem">'+
       '<p class="q">How long?</p><div class="seg" role="group" aria-label="Session length">'+[20,45,60,90].map(function(n){return '<button data-pmin="'+n+'" aria-pressed="'+(v.minutes===n)+'">'+n+'</button>'}).join("")+'</div><p class="hint">Minutes.</p>'+
-      (sent?'<p class="anchor" style="margin-top:24px">I will make on '+esc(sent)+'.</p>':'<p class="hint" style="margin-top:20px">Pick at least one day to see your plan.</p>')+
-      (sent?'<div class="chips"><button class="chip" data-pcommit aria-pressed="'+(!!v.committed)+'">'+(v.committed?'✓ ':'')+'I commit to this plan</button></div><p class="hint">You can change the plan at any time.</p>':'')+
-      '<div class="stack" style="margin-top:20px"><button class="btn wide" data-act="saveplan"'+(sent?'':' disabled')+'>Save plan</button></div>'+
-      (saved?'<h2>Calendar</h2><p>Add the sessions to Google Calendar as one weekly event.</p><a class="btn wide" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box" href="'+esc(calendarLink(plan))+'" target="_blank" rel="noopener">Add to Google Calendar</a>':'')+
-      '<div class="stack" style="margin-top:24px"><button class="btn ghost wide" data-act="home">Back</button></div>';
+      (sent?'<p class="anchor" style="margin-top:24px">I will make on '+esc(sent)+'.</p><div class="chips"><button class="chip" data-pcommit aria-pressed="'+(!!v.committed)+'">'+(v.committed?'✓ ':'')+'I commit to this plan</button></div><p class="hint">You can change the plan at any time this week.</p>':'<p class="hint" style="margin-top:20px">Pick at least one day to see your plan.</p>')+
+      '<div class="stack" style="margin-top:20px"><button class="btn wide" data-act="saveplan"'+(sent?'':' disabled')+'>Save plan</button></div>'+links+
+      '<div class="stack" style="margin-top:24px"><button class="btn ghost wide" data-act="schedule">Back to schedule</button></div>';
   }
+  function reviewWeek(){return planFor(thisWk())?thisWk():wkAdd(thisWk(),-1)}
   function reviewView(){
     var r=rv||(rv={blockers:[],changes:[],note:""});
-    var wk=Date.now()-7*86400000,done=sessionsSince(wk);
-    var planned=plan&&plan.days?plan.days.length:0;
+    var wk=reviewWeek(),p=planFor(wk),planned=p?p.days.length:0,done=p?doneIn(p):sessions.filter(function(x){var t=x.startedAt||x.createdAt;return t>=wk&&t<wkAdd(wk,1)}).length;
+    var nxt=planFor(wkAdd(thisWk(),1));
     function chips(list,key,sel){return '<div class="chips">'+list.map(function(t){return '<button class="chip" data-'+key+'="'+esc(t)+'" aria-pressed="'+(sel.indexOf(t)>-1)+'">'+esc(t)+'</button>'}).join("")+'</div>'}
     return '<h1>Weekly check-in</h1>'+
-      '<p class="lede">Look at the last 7 days, then plan the next 7.</p>'+
-      '<div class="summary"><p>Planned: '+planned+' '+(planned===1?'session':'sessions')+' a week.</p><p>Done in the last 7 days: '+done+'.</p></div>'+
+      '<p class="lede">Look at the week, then plan the next one.</p>'+
+      '<div class="summary"><p>Week of '+fmtWeek(wk)+'.</p><p>Planned: '+planned+' '+(planned===1?'session':'sessions')+'. Done: '+done+'.</p></div>'+
       '<p class="q">What got in the way? (optional)</p>'+chips(BLOCKERS,"rblock",r.blockers)+
       '<p class="q">What would you change? (optional)</p>'+chips(CHANGES,"rchange",r.changes)+
       '<label class="q" for="rnote">Anything else to note (optional)</label><textarea id="rnote" data-rf="note">'+esc(r.note)+'</textarea>'+
-      (plan&&plan.days.length?'<p class="q">Current plan</p><p class="body">'+esc(planSentence(plan))+'.</p>':'')+
-      '<div class="stack" style="margin-top:20px"><button class="btn ghost wide" data-act="plan">Change the plan</button><button class="btn wide" data-act="savereview">Save check-in</button><button class="btn ghost wide" data-act="home">Back</button></div>';
+      '<p class="q">Next week</p><p class="body">'+(nxt?esc(planSentence(nxt))+'. '+(nxt.committed?'Committed.':'Not committed yet.'):'No sessions planned yet.')+'</p>'+
+      '<div class="stack" style="margin-top:20px"><button class="btn ghost wide" data-act="plannext">'+(nxt?'Change next week’s plan':'Plan next week')+'</button><button class="btn wide" data-act="savereview">Save check-in</button><button class="btn ghost wide" data-act="schedule">Back to schedule</button></div>';
   }
 
   /* ---------- views ---------- */
@@ -333,10 +359,9 @@ details.opt{margin-top:22px}
     var resume=draft?'<button class="btn wide" data-act="resume">Resume your session</button>'+(confirmKey==="discard"?'<p class="q">Discard the session in progress?</p><button class="btn wide" data-act="discard-yes">Yes, start over</button><button class="btn ghost wide" data-act="discard-no">Keep session</button>':'<button class="btn ghost wide" data-act="discard">Start over</button>')
       :'<button class="btn wide" data-act="begin">Begin a session</button><button class="btn ghost wide" data-act="short">Just make (20 minutes, no setup)</button>';
     var n=sessions.length;
-    return '<h1>A private making session</h1>'+
+    return tabs('make')+'<h1>A private making session</h1>'+
       '<p class="anchor">Making things is a way to learn about yourself.</p>'+
       '<p class="lede">Nothing here is scored, and there are no streaks. Any session you do is enough.</p>'+
-      planCard()+
       '<div class="stack">'+resume+
       '<button class="btn ghost wide" data-act="notes">Read your notes'+(n?' ('+n+')':'')+'</button>'+
       '<button class="btn ghost wide" data-act="about">Why it works this way</button></div>'+
@@ -446,7 +471,7 @@ details.opt{margin-top:22px}
     return '<h1>Saved</h1>'+
       (s&&s.learned?'<p class="anchor">'+esc(s.learned)+'</p>':'<p class="lede">The session is in your notes.</p>')+
       (d?'<p class="small">'+d+'</p>':'')+
-      (nextSlot(plan)?'<p class="small">Next planned session: '+esc(fmtSlot(nextSlot(plan)))+'.</p>':'')+
+      (nextSlot()?'<p class="small">Next planned session: '+esc(fmtSlot(nextSlot()))+'.</p>':'')+
       (s&&s.parked?'<p class="q">You saved this task for later</p><p class="body">'+esc(s.parked)+'</p><p class="hint">You can do the task now if you have the energy. If not, the task can wait.</p>':'')+
       (s&&s.tell?'<p class="q">You named someone to tell</p><p class="body">'+esc(s.tell)+'</p>':'')+
       '<div class="stack" style="margin-top:24px"><button class="btn wide" data-act="notes">Read your notes</button><button class="btn ghost wide" data-act="home">Done</button></div>';
@@ -569,6 +594,7 @@ details.opt{margin-top:22px}
     else if(view==="notes")html=notesView();
     else if(view==="about")html=aboutView();
     else if(view==="plan")html=planView();
+    else if(view==="schedule")html=scheduleView();
     else if(view==="review")html=reviewView();
     else if(view==="done")html=doneView(sessions[0]);
     else if(view==="checkin"){html=checkinView("before");navHtml='<button class="btn ghost" data-act="home">Back</button><button class="btn" data-act="firststep">Continue</button>'}
@@ -610,16 +636,20 @@ details.opt{margin-top:22px}
     if(act==="discard-no"){confirmKey=null;render();return}
     if(act==="discard-yes"){confirmKey=null;draft=null;lsDel(LS_DRAFT);render();return}
     if(act==="notes"){go("notes");return}
-    if(act==="plan"){pd=newPd();go("plan");return}
+    if(act==="schedule"){go("schedule");return}
+    if(act==="plan"){pd=newPd(defaultWeek());go("plan");return}
+    if(act==="plannext"){pd=newPd(wkAdd(thisWk(),1));go("plan");return}
     if(act==="review"){go("review");return}
     if(act==="saveplan"){
       if(!pd||!pd.days.length)return;
-      plan={id:(plan&&plan.id)||uid(),days:pd.days.slice().sort(),time:pd.time||"19:00",minutes:pd.minutes,committed:!!pd.committed,updatedAt:Date.now()};
-      lsSet(LS_PLAN,plan);pushPlan();render();window.scrollTo(0,0);return}
+      var np={id:(planFor(pd.forWeek)||{}).id||uid(),forWeek:pd.forWeek,days:pd.days.slice().sort(),time:pd.time||"19:00",minutes:pd.minutes,committed:!!pd.committed,updatedAt:Date.now()};
+      plans=plans.filter(function(q){return q.forWeek!==np.forWeek});plans.push(np);plans.sort(function(x,y){return y.forWeek-x.forWeek});
+      lsSet(LS_PLANS,plans);pushPlan(np);render();window.scrollTo(0,0);return}
     if(act==="savereview"){
       var rr=rv||{blockers:[],changes:[],note:""};
-      var c={id:uid(),createdAt:Date.now(),planned:plan&&plan.days?plan.days.length:0,done:sessionsSince(Date.now()-7*86400000),blockers:rr.blockers,changes:rr.changes,note:rr.note};
-      checkins.unshift(c);lsSet(LS_CHK,checkins);pushCheckin(c);rv=null;go("home");return}
+      var rwk=reviewWeek(),rp=planFor(rwk);
+      var c={id:uid(),createdAt:Date.now(),week:rwk,planned:rp?rp.days.length:0,done:rp?doneIn(rp):0,blockers:rr.blockers,changes:rr.changes,note:rr.note};
+      checkins.unshift(c);lsSet(LS_CHK,checkins);pushCheckin(c);rv=null;go("schedule");return}
     if(act==="export"){exportNotes();return}
     if(act==="about"){go("about");return}
     if(act==="home"){go("home");return}
@@ -631,8 +661,10 @@ details.opt{margin-top:22px}
       var s=Object.assign({},draft);delete s.step;delete s.view;s.synced=false;
       if(s.startedAt&&!s.endedAt)s.endedAt=Date.now();
       sessions=sessions.filter(function(x){return x.id!==s.id});sessions.push(s);sortSessions();cacheSessions();
-      pushSession(s);pushPlan();draft=null;lsDel(LS_DRAFT);go("done");return;
+      pushSession(s);pushShared();draft=null;lsDel(LS_DRAFT);go("done");return;
     }
+    var pwk=t.getAttribute("data-pweek");
+    if(pwk!==null){pd=newPd(wkAdd(thisWk(),+pwk));render();return}
     var pdy=t.getAttribute("data-pday");
     if(pdy!==null&&pd){var di=pd.days.indexOf(+pdy);if(di>-1)pd.days.splice(di,1);else pd.days.push(+pdy);render();return}
     var pmn=t.getAttribute("data-pmin");
@@ -698,6 +730,8 @@ details.opt{margin-top:22px}
   });
   document.addEventListener("visibilitychange",function(){if(!document.hidden&&view==="step"&&step===5){var c=document.getElementById("clock");if(c)c.textContent=elapsedText()}});
 
+  /* migrate single plan from version 11 */
+  (function(){var old=lsGet(LS_PLAN,null);if(old&&old.days){if(!old.forWeek)old.forWeek=weekStart(old.updatedAt||Date.now());if(!planFor(old.forWeek)){plans.push(old);lsSet(LS_PLANS,plans)}}lsDel(LS_PLAN)})();
   /* migrate sessions saved by the first version */
   (function(){var old=lsGet("ms.sessions",null);if(old&&old.length){var ids={};sessions.forEach(function(s){ids[s.id]=1});old.forEach(function(s){if(!ids[s.id]){s.before=s.before||{};s.after=s.after||{};s.tags=s.tags||[];s.synced=false;sessions.push(s)}});sortSessions();cacheSessions();lsDel("ms.sessions")}})();
 
